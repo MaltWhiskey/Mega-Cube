@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"path": "LED Display"
+		},
+		{
+			"path": "TFT LCD"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"type_traits": "cpp"
+		}
+	}
+}

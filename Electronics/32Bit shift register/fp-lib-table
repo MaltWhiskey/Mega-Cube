@@ -1,0 +1,4 @@
+(fp_lib_table
+  (lib (name teensy)(type KiCad)(uri /Users/maltwhiskey/Documents/KiCad/teensy.pretty)(options "")(descr ""))
+  (lib (name teensy_library)(type KiCad)(uri /Users/maltwhiskey/Documents/KiCad/teensy_library)(options "")(descr ""))
+)
