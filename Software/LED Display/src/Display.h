@@ -7,7 +7,7 @@
 #include "Color.h"
 
 // Choose between WS2812 or PL9823
-//#define PL9823
+#define PL9823
 // Amount of leds per channel
 const uint16_t LEDCOUNT = 128;
 // Amount of bits per led (keep at 24 for RGB)
@@ -45,6 +45,14 @@ void setLed(uint8_t channel, uint8_t led, Color color) {
       dmaBufferData[0][offset++] &= ~mask;
     value <<= 1;
   }
+}
+
+void setLed(uint8_t x, uint8_t y, uint8_t z, Color color) {
+  uint8_t channel = ((x>>1)&0x0E) + ((z<<1)&0xF8) + ((z>>1)&0x01);
+  uint8_t led = (x<<4)&0x30;
+  if(x&1) { led += (15 - y); } else led+= y;
+  if(z&1) {led=127-led;}
+  setLed(channel, led, color);
 }
 /****************************************************************************
  * Set up PLL5 (also known as "VIDEO PLL")

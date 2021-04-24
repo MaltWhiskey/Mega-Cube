@@ -1,3 +1,3 @@
 (sym_lib_table
-  (lib (name teensy)(type Legacy)(uri /Users/maltwhiskey/Documents/KiCad/teensy_library/teensy.lib)(options "")(descr ""))
+  (lib (name 32Bit-shift-register-rescue)(type Legacy)(uri "${KIPRJMOD}/32Bit shift register-rescue.lib")(options "")(descr ""))
 )
