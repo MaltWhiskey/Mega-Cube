@@ -1,11 +1,17 @@
-#include <stdint.h>
-#include <math.h>
 #include "Math3D.h"
-/*----------------------------------------------------------------------------------------------
+
+#include <math.h>
+#include <stdint.h>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846f
+#endif
+
+/*------------------------------------------------------------------------------
  * Vector3 CLASS
- *--------------------------------------------------------------------------------------------*/
+ *----------------------------------------------------------------------------*/
 Vector3::Vector3() : x(0.0f), y(0.0f), z(0.0f){};
-Vector3::Vector3(const float x_, const float y_, const float z_) : x(x_), y(y_), z(z_){};
+Vector3::Vector3(float x_, float y_, float z_) : x(x_), y(y_), z(z_){};
 Vector3::Vector3(const Vector3& v) : x(v.x), y(v.y), z(v.z){};
 
 // add, subtract (operator +, -, +=, -=)
@@ -31,15 +37,19 @@ Vector3& Vector3::operator-=(const Vector3& v) {
 Vector3 Vector3::operator-() const { return Vector3(-x, -y, -z); }
 
 // multiply, divide by scalar (operator *, /, *=, /=)
-Vector3 Vector3::operator*(const float s) const { return Vector3(x * s, y * s, z * s); }
-Vector3 Vector3::operator/(const float s) const { return Vector3(x / s, y / s, z / s); }
-Vector3& Vector3::operator*=(const float s) {
+Vector3 Vector3::operator*(float s) const {
+  return Vector3(x * s, y * s, z * s);
+}
+Vector3 Vector3::operator/(float s) const {
+  return Vector3(x / s, y / s, z / s);
+}
+Vector3& Vector3::operator*=(float s) {
   x *= s;
   y *= s;
   z *= s;
   return *this;
 }
-Vector3& Vector3::operator/=(const float s) {
+Vector3& Vector3::operator/=(float s) {
   x /= s;
   y /= s;
   z /= s;
@@ -54,7 +64,9 @@ Vector3 Vector3::operator*(const Vector3& v) const { return cross(v); }
 Vector3& Vector3::operator*=(const Vector3& v) { return *this = cross(v); }
 
 // dot product (operator %)
-float Vector3::dot(const Vector3& v) const { return x * v.x + y * v.y + z * v.z; }
+float Vector3::dot(const Vector3& v) const {
+  return x * v.x + y * v.y + z * v.z;
+}
 float Vector3::operator%(const Vector3& v) const { return dot(v); }
 
 // normalize
@@ -77,20 +89,22 @@ Vector3 Vector3::rotate(float angle, const Vector3& v) const {
 
 // Test if this vector (point) is within a spherical radius of v inclusive
 bool Vector3::inside(const Vector3& v, float radius) const {
-  return ((v.x - x) * (v.x - x) + (v.y - y) * (v.y - y) + (v.z - z) * (v.z - z) <=
+  return ((v.x - x) * (v.x - x) + (v.y - y) * (v.y - y) +
+              (v.z - z) * (v.z - z) <=
           radius * radius);
 }
 // Test if this vector (point) is inside a box, low inclusive, high exclusive
 bool Vector3::inside(const Vector3& l, const Vector3& h) const {
-  return (x < h.x && x >= l.x) && (y < h.y && y >= l.y) && (z < h.z && z >= l.z);
+  return (x < h.x && x >= l.x) && (y < h.y && y >= l.y) &&
+         (z < h.z && z >= l.z);
 }
 
-/*----------------------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------
  * Quaternion CLASS
- *--------------------------------------------------------------------------------------------*/
+ *----------------------------------------------------------------------------*/
 Quaternion::Quaternion() : w(0.0f), v(Vector3(0.0, 0.0, 0.0)) {}
 // Make a quaternion from a scalar and a vector
-Quaternion::Quaternion(const float w_, const Vector3& v_) {
+Quaternion::Quaternion(float w_, const Vector3& v_) {
   w = w_;
   v = v_;
 }
@@ -134,14 +148,18 @@ Quaternion& Quaternion::operator-=(const Quaternion& q) {
 }
 
 // multiply, divide by scalar (operator *, /, *=, /=)
-Quaternion Quaternion::operator*(const float s) const { return Quaternion(w * s, v * s); }
-Quaternion Quaternion::operator/(const float s) const { return Quaternion(w / s, v / s); }
-Quaternion& Quaternion::operator*=(const float s) {
+Quaternion Quaternion::operator*(float s) const {
+  return Quaternion(w * s, v * s);
+}
+Quaternion Quaternion::operator/(float s) const {
+  return Quaternion(w / s, v / s);
+}
+Quaternion& Quaternion::operator*=(float s) {
   w *= s;
   v *= s;
   return *this;
 }
-Quaternion& Quaternion::operator/=(const float s) {
+Quaternion& Quaternion::operator/=(float s) {
   w /= s;
   v /= s;
   return *this;
@@ -157,10 +175,14 @@ Quaternion Quaternion::operator*(const Quaternion& q) const {
 Quaternion Quaternion::operator/(const Quaternion& q) const {
   return *this * q.inversed();
 }
-Quaternion& Quaternion::operator*=(const Quaternion& q) { return *this = operator*(q); }
+Quaternion& Quaternion::operator*=(const Quaternion& q) {
+  return *this = operator*(q);
+}
 
 // dot product (operator %)
-float Quaternion::dot(const Quaternion& q) const { return w * q.w + v.dot(q.v); }
+float Quaternion::dot(const Quaternion& q) const {
+  return w * q.w + v.dot(q.v);
+}
 float Quaternion::operator%(const Quaternion& q) const { return dot(q); }
 
 // inverse

@@ -1,19 +1,19 @@
 #ifndef MATH3D_H_
 #define MATH3D_H_
-/*----------------------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------
  * Vector3 CLASS
- *----------------------------------------------------------------------------------------------
- * A vector V in physics is an (angel, magnitude) magnitude is length and the angle
- * is usually represented by Greek letter theta.
+ *------------------------------------------------------------------------------
+ * A vector V in physics is an (angel, magnitude) magnitude is length and the
+ * angle is usually represented by Greek letter theta.
  *
  * In game development a vector is stored as (x,y,z) representing a movement
  * in the Cartesian plane across the x, y and z axis.
  *
- * A point or the position of an object can also be represented by a vector by moving
- * from the origin to the coordinates (x,y,z)
+ * A point or the position of an object can also be represented by a vector by
+ * moving from the origin to the coordinates (x,y,z)
  *
  * The length = sqrt(x*x + y*y + z*z)
- *----------------------------------------------------------------------------------------------*/
+ *----------------------------------------------------------------------------*/
 class Vector3 {
  public:
   float x, y, z;
@@ -21,7 +21,7 @@ class Vector3 {
  public:
   // constructors
   Vector3();
-  Vector3(const float x, const float y, const float z);
+  Vector3(float x, float y, float z);
   Vector3(const Vector3& v);
 
   // moving
@@ -33,10 +33,10 @@ class Vector3 {
   Vector3 operator-() const;
 
   // scaling
-  Vector3 operator*(const float s) const;
-  Vector3 operator/(const float s) const;
-  Vector3& operator*=(const float s);
-  Vector3& operator/=(const float s);
+  Vector3 operator*(float s) const;
+  Vector3 operator/(float s) const;
+  Vector3& operator*=(float s);
+  Vector3& operator/=(float s);
 
   // cross product
   Vector3 cross(const Vector3& v) const;
@@ -63,14 +63,15 @@ class Vector3 {
   bool inside(const Vector3& l, const Vector3& h) const;
 };
 
-/*----------------------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------
  * Quaternion CLASS
- *----------------------------------------------------------------------------------------------
- * A Quaternion is a complex number in the form  w + xi + yj + zk, where w, x, y, z are
- *real numbers and i, j, k are imaginary.
+ *------------------------------------------------------------------------------
+ * A Quaternion is a complex number in the form  w + xi + yj + zk, where w, x,
+ *y, z are real numbers and i, j, k are imaginary.
  *
- * In the implementation i,j and k are ignored, w is a scalar and x,y,z is a vector
- *----------------------------------------------------------------------------------------------*/
+ * In the implementation i,j and k are ignored, w is a scalar and x,y,z is a
+ *vector
+ *----------------------------------------------------------------------------*/
 class Quaternion {
  public:
   float w;
@@ -80,7 +81,7 @@ class Quaternion {
   // constructors
   Quaternion();
   Quaternion(const Quaternion& q);
-  Quaternion(const float a, const Vector3& v);
+  Quaternion(float w, const Vector3& v);
   Quaternion(const Vector3& v, float a);
 
   // moving (add subtract)
@@ -90,11 +91,10 @@ class Quaternion {
   Quaternion& operator-=(const Quaternion& q);
 
   // scaling (multiply divide by scalar)
-  Quaternion operator*(const float s) const;
-  Quaternion operator/(const float s) const;
-
-  Quaternion& operator*=(const float s);
-  Quaternion& operator/=(const float s);
+  Quaternion operator*(float s) const;
+  Quaternion operator/(float s) const;
+  Quaternion& operator*=(float s);
+  Quaternion& operator/=(float s);
 
   // multiply quaternions
   Quaternion operator*(const Quaternion& q) const;

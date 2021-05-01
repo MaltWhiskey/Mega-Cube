@@ -1,29 +1,30 @@
-#ifndef NOISEGENERATOR_H
-#define NOISEGENERATOR_H
+#ifndef NOISE_H
+#define NOISE_H
 #include <Arduino.h>
 #include <stdint.h>
-/*----------------------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------
  * NoiseGenerator CLASS
- *----------------------------------------------------------------------------------------------
- * This class generates numbers according to a plan. The numbers can be random, from a
- * Perlin noise like distribution or from a Gaussian distribution.
+ *------------------------------------------------------------------------------
+ * This class generates numbers according to a plan. The numbers can be random,
+ * from a Perlin noise like distribution or from a Gaussian distribution.
  *
  * Perlin Noise:
- * The float x,y,z,w parameters for the noise functions use the integer part & 0xff and
- * the fractional part so the range for integer part is 0 to 255 and than loops back.
+ * The float x,y,z,w parameters for the noise functions use the integer part &
+ * 0xff and the fractional part so the range for integer part is 0 to 255 and
+ * than loops back.
  *
- * The int px, py, pz, pw parameters wrap the noise arround an integer range, the range
- * is 0 to 255. The parameters are & 0xff.
+ * The int px, py, pz, pw parameters wrap the noise arround an integer range,
+ * the range is 0 to 255. The parameters are & 0xff.
  *
- * The return float is a value between 0.0f and 1.0f arround 5% of the values are clamped
- * 2.5% at the lower end and 2.5% at the higher end.
+ * The return float is a value between 0.0f and 1.0f arround 5% of the values
+ * are clamped 2.5% at the lower end and 2.5% at the higher end.
  *
  * NOTE: NOT al values are distributed equally, and 5% of the values are clamped
- *----------------------------------------------------------------------------------------------*/
-class NoiseGenerator {
+ *----------------------------------------------------------------------------*/
+class Noise {
  private:
-  static bool hasSpare;
-  static float spare;
+  float spare;
+  bool hasSpare = false;
   static const uint8_t perm[512];
 
  public:
@@ -52,6 +53,7 @@ class NoiseGenerator {
   float noise3(float x, float y, float z);
   float pnoise3(float x, float y, float z, int px, int py, int pz);
   float noise4(float x, float y, float z, float w);
-  float pnoise4(float x, float y, float z, float w, int px, int py, int pz, int pw);
+  float pnoise4(float x, float y, float z, float w, int px, int py, int pz,
+                int pw);
 };
 #endif

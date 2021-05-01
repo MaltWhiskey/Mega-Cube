@@ -1,59 +1,100 @@
-#ifndef DISPLAY_H
-#define DISPLAY_H
+#include "display.h"
+
 #include <Arduino.h>
-#include <DMAChannel.h>
-#include <stdint.h>
 
-#include "Color.h"
-
-// Choose between WS2812 or PL9823
-#define PL9823
-// Amount of leds per channel
-const uint16_t LEDCOUNT = 128;
-// Amount of bits per led (keep at 24 for RGB)
-const uint8_t BITCOUNT = 24;
-// DIN (data in, bit to be shifted in on BCK)
-const uint8_t DIN = 8;
-// WCK (word clock, latches the shiftregisters)
-const uint8_t WCK = 9;
-// BCK (bit clock, shifts all data bits)
-const uint8_t BCK = 10;
-
-DMAChannel dmaChannel[2];
-DMASetting dmaSetting[6];
-volatile uint32_t dmaBufferData[2][BITCOUNT * LEDCOUNT];
-volatile uint32_t dmaBufferHigh[1] = {0xFFFFFFFF};
-volatile uint32_t dmaBufferLow[50] = {};
-/****************************************************************************
- * Set led color data
- *
- * Only RGB is supported, but easily adaptable to RGBW or even more than
- * 32 bits by modifying this code.
- *
- * Should optimize this in assembly because this will be used for every
- * led, every frame.
- ***************************************************************************/
-void setLed(uint8_t channel, uint8_t led, Color color) {
-  uint32_t mask = 1 << channel;
-  uint16_t offset = BITCOUNT * led;
-  uint32_t value = (color.red << 24) + (color.green << 16) + (color.blue << 8);
-
-  for (uint8_t i = 0; i < BITCOUNT; i++) {
-    if (value & 0x80000000)
-      dmaBufferData[0][offset++] |= mask;
-    else
-      dmaBufferData[0][offset++] &= ~mask;
-    value <<= 1;
+#include "timer.h"
+/*------------------------------------------------------------------------------
+ * DISPLAY CLASS
+ *----------------------------------------------------------------------------*/
+void Display::begin() {
+  setupPLL();
+  setupFIO();
+  setupDMA();
+}
+// Static interrupt handler, delegate to the only instance
+void Display::interruptAtCompletion(void) {
+  Display::instance().displayReady();
+}
+// Triggered after all led data is sent but before reset/latch
+void Display::displayReady(void) {
+  // First clear the interrupt flag to avoid retriggering
+  dmaChannel[0].clearInterrupt();
+  // Swap dma buffer if a new one is available
+  if (!m_displayAvailable) {
+    // The prep buffer becomes the dma buffer and visa versa
+    m_dmaBuffer = 1 - m_dmaBuffer;
+    dmaSetting[0].sourceBuffer(dmaBufferData[m_dmaBuffer],
+                               sizeof(dmaBufferData[0]));
+    dmaSetting[4].sourceBuffer(dmaBufferData[m_dmaBuffer],
+                               sizeof(dmaBufferData[0]));
   }
+  // The display is available to accept cube data
+  m_displayAvailable = true;
 }
 
-void setLed(uint8_t x, uint8_t y, uint8_t z, Color color) {
-  uint8_t channel = ((x>>1)&0x0E) + ((z<<1)&0xF8) + ((z>>1)&0x01);
-  uint8_t led = (x<<4)&0x30;
-  if(x&1) { led += (15 - y); } else led+= y;
-  if(z&1) {led=127-led;}
-  setLed(channel, led, color);
+// Notifies the display that a new frame is ready for displaying. Transfer the
+// cube data to the prep buffer and enable the interrupt to swap the buffers.
+void Display::update() {
+  // Create the dma buffer from the prep buffer.
+  for (uint8_t z = 0; z < depth; z++) {
+    for (uint8_t y = 0; y < height; y++) {
+      for (uint8_t x = 0; x < width; x++) {
+        Color c = color(x, y, z);
+        c = c.scale(64);
+        uint8_t chn = ((x >> 1) & 0x0E) + ((z << 1) & 0xF8) + ((z >> 1) & 0x01);
+        //        uint8_t led = ((x << 4) & 0x30) + ((y ^ (-(x & 1))) & 0x0F) +
+        //                      ((y ^ (-(z & 1))) & 0x8F);
+        uint8_t led = (x << 4) & 0x30;
+        if (x & 1) {
+          led += (15 - y);
+        } else
+          led += y;
+        if (z & 1) {
+          led = 127 - led;
+        }
+        uint32_t mask = 1 << chn;
+        uint32_t value = (c.red << 24) + (c.green << 16) + (c.blue << 8);
+        uint16_t offset = BITCOUNT * led;
+        for (uint8_t i = 0; i < BITCOUNT; i++) {
+          if (value & 0x80000000)
+            dmaBufferData[1 - m_dmaBuffer][offset++] |= mask;
+          else
+            dmaBufferData[1 - m_dmaBuffer][offset++] &= ~mask;
+          value <<= 1;
+        }
+      }
+    }
+  }
+  // Writing to the cube data is not allowed to prevent frame tearing
+  m_displayAvailable = false;
 }
+
+// Check if the display is available to accept new cube data
+bool Display::available() { return m_displayAvailable; }
+
+// Clear the cube so a new frame can be freshly created.
+void Display::clear() { memset(cube, 0, sizeof(cube)); }
+
+const uint8_t Display::gamma8[256] = {
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   1,   1,
+    1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   2,   2,   2,   2,
+    2,   2,   2,   2,   3,   3,   3,   3,   3,   3,   3,   4,   4,   4,   4,
+    4,   5,   5,   5,   5,   6,   6,   6,   6,   7,   7,   7,   7,   8,   8,
+    8,   9,   9,   9,   10,  10,  10,  11,  11,  11,  12,  12,  13,  13,  13,
+    14,  14,  15,  15,  16,  16,  17,  17,  18,  18,  19,  19,  20,  20,  21,
+    21,  22,  22,  23,  24,  24,  25,  25,  26,  27,  27,  28,  29,  29,  30,
+    31,  32,  32,  33,  34,  35,  35,  36,  37,  38,  39,  39,  40,  41,  42,
+    43,  44,  45,  46,  47,  48,  49,  50,  50,  51,  52,  54,  55,  56,  57,
+    58,  59,  60,  61,  62,  63,  64,  66,  67,  68,  69,  70,  72,  73,  74,
+    75,  77,  78,  79,  81,  82,  83,  85,  86,  87,  89,  90,  92,  93,  95,
+    96,  98,  99,  101, 102, 104, 105, 107, 109, 110, 112, 114, 115, 117, 119,
+    120, 122, 124, 126, 127, 129, 131, 133, 135, 137, 138, 140, 142, 144, 146,
+    148, 150, 152, 154, 156, 158, 160, 162, 164, 167, 169, 171, 173, 175, 177,
+    180, 182, 184, 186, 189, 191, 193, 196, 198, 200, 203, 205, 208, 210, 213,
+    215, 218, 220, 223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252,
+    255};
+
 /****************************************************************************
  * Set up PLL5 (also known as "VIDEO PLL")
  * This configures the Clock Controller Module (CCM)
@@ -62,7 +103,7 @@ void setLed(uint8_t x, uint8_t y, uint8_t z, Color color) {
  * 24 * (DIV_SELECT + NUM/DENOM) -> 24 * (42 + 2/3) = 1024 MHz
  * 24 * (DIV_SELECT + NUM/DENOM) -> 24 * (29 + 17/27) = 711.1111111 MHz
  ***************************************************************************/
-void configurePll() {
+void Display::setupPLL() {
   // Before disabeling the PLL set the bypass source to the internal 24MHz
   // reference clock. See 14.6.1.6 page 1039.
   CCM_ANALOG_PLL_VIDEO_CLR = CCM_ANALOG_PLL_VIDEO_BYPASS_CLK_SRC(3) |
@@ -110,7 +151,7 @@ void configurePll() {
   CCM_ANALOG_PLL_VIDEO_CLR = CCM_ANALOG_PLL_VIDEO_BYPASS;
 }
 
-/******************************************************************************
+/*******************************************************************************
  * Configure flexio
  *
  * Pad settings:
@@ -125,8 +166,8 @@ void configurePll() {
  *   DSE drive strength = 7 (should be impedance matched)
  *     (0 = off, 1=150/1 Ohm, 2=150/2 Ohm, 3=150/3 Ohm, ... 7=150/7 Ohm)
  *   SRE slew rate = 0 (0=slow, 1=fast)
- *****************************************************************************/
-void configureFlexIO() {
+ ******************************************************************************/
+void Display::setupFIO() {
   *portModeRegister(DIN) |= digitalPinToBitMask(DIN);
   *portControlRegister(DIN) = IOMUXC_PAD_DSE(7) | IOMUXC_PAD_SPEED(1);
   // SION + ALT4 (FLEXIO2_FLEXIO16) (IOMUXC_SW_MUX_CTL_PAD_GPIO_B1_00)
@@ -138,7 +179,7 @@ void configureFlexIO() {
   *portConfigRegister(WCK) = 0x14;
 
   *portModeRegister(BCK) |= digitalPinToBitMask(BCK);
-  *portControlRegister(BCK) = IOMUXC_PAD_DSE(7) | IOMUXC_PAD_SPEED(1);
+  *portControlRegister(BCK) = IOMUXC_PAD_DSE(6) | IOMUXC_PAD_SPEED(1);
   // SION + ALT4 (FLEXIO2_FLEXIO00) (IOMUXC_SW_MUX_CTL_PAD_GPIO_B0_00)
   *portConfigRegister(BCK) = 0x14;
 
@@ -260,7 +301,7 @@ void configureFlexIO() {
   IMXRT_FLEXIO2_S.TIMCMP[1] = 0x0000001F;
 
   // Shiftbuffers 1 & 2 get filled by DMA later. Start with all zero's
-  // to reset the led's. See 50.5.1.6.3 page 2918 for DMA triggering.
+  // to reset/latch the led's. See 50.5.1.6.3 page 2918 for DMA triggering.
   IMXRT_FLEXIO2_S.SHIFTBUFBIS[0] = 0x00000000;
   IMXRT_FLEXIO2_S.SHIFTBUFBIS[1] = 0x00000000;
   IMXRT_FLEXIO2_S.SHIFTBUFBIS[2] = 0x00000000;
@@ -272,11 +313,14 @@ void configureFlexIO() {
   IMXRT_FLEXIO2_S.CTRL = FLEXIO_CTRL_FLEXEN;
 }
 
-void configureDma() {
+void Display::setupDMA() {
   // TCD 0 transfers the active dma buffer data to SHIFTBUF[1].
-  dmaSetting[0].sourceBuffer(dmaBufferData[0], sizeof(dmaBufferData[0]));
+  dmaSetting[0].sourceBuffer(dmaBufferData[m_dmaBuffer],
+                             sizeof(dmaBufferData[0]));
   dmaSetting[0].destination(IMXRT_FLEXIO2_S.SHIFTBUFBIS[1]);
   dmaSetting[0].replaceSettingsOnCompletion(dmaSetting[1]);
+  // Synchronize buffer swapping with dma transfer to avoid display artifacts
+  dmaSetting[0].interruptAtCompletion();
   // TCD 1 sets SHIFTBUF[0] Low. The DMA channel is triggered by FlexIO
   // shifter 1. A write to SHIFTBUF[0] doesn't clear this trigger. The DMA
   // channel is triggered again upon completion of TCD1
@@ -294,7 +338,8 @@ void configureDma() {
   dmaSetting[3].replaceSettingsOnCompletion(dmaSetting[0]);
 
   // TCD 4 = TCD 0 for SHIFBUF[2]
-  dmaSetting[4].sourceBuffer(dmaBufferData[0], sizeof(dmaBufferData[0]));
+  dmaSetting[4].sourceBuffer(dmaBufferData[m_dmaBuffer],
+                             sizeof(dmaBufferData[0]));
   dmaSetting[4].destination(IMXRT_FLEXIO2_S.SHIFTBUFBIS[2]);
   dmaSetting[4].replaceSettingsOnCompletion(dmaSetting[5]);
   // TCD 5 = TCD 0 for SHIFBUF[2]
@@ -305,10 +350,13 @@ void configureDma() {
   // Initialize both DMA channels
   dmaChannel[0].disable();
   dmaChannel[1].disable();
-  // Start with the reset signal
+  // Start with the reset/latch signal, so we can begin "fresh"
   dmaChannel[0] = dmaSetting[2];
   dmaChannel[1] = dmaSetting[5];
   dmaChannel[0].triggerAtHardwareEvent(DMAMUX_SOURCE_FLEXIO2_REQUEST1);
+  // Attach interrupt to dma channel 0. The interrupt is enabled in update
+  // and disabled again in the ISR.
+  dmaChannel[0].attachInterrupt(&interruptAtCompletion);
   // Bit pattern for PL9823 leds: High, Data, Data, Low
   // Bit pattern for WS2812 leds: High, Data, Low, Low
 #if defined PL9823
@@ -318,4 +366,3 @@ void configureDma() {
   dmaChannel[0].enable();
   dmaChannel[1].enable();
 }
-#endif

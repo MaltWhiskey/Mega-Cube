@@ -2,19 +2,19 @@
 #define TIMER_H
 #include <Arduino.h>
 #include <stdint.h>
-/*----------------------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------
  * TIMER CLASS
- *----------------------------------------------------------------------------------------------
+ *------------------------------------------------------------------------------
  * The Timer class is used to do timing specific actions. All time is in seconds
  *
  * Sets a timer for 0.10 seconds:
  * Timer t = 0.10f;
  * Timer t = Timer(0.10f);
  *
- * Returns an integer of the times the timer has counted 0.10 seconds but only if
- * the next alarm threshold has passed since last call to update, otherwise returns zero.
- * t.update();
- *----------------------------------------------------------------------------------------------*/
+ * Returns an integer of the times the timer has counted 0.10 seconds but only
+ *if the next alarm threshold has passed since last call to update, otherwise
+ *returns zero. t.update();
+ *----------------------------------------------------------------------------*/
 class Timer {
  public:
   Timer();

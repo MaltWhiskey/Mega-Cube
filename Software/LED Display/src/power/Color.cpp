@@ -1,11 +1,9 @@
-#include "Color.h"
-
 #include <Arduino.h>
-
+#include "Color.h"
 #include "Math8.h"
-/*---------------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------
  * Color CLASS
- *-------------------------------------------------------------------------------------*/
+ *----------------------------------------------------------------------------*/
 Color::Color() {}
 Color::Color(const Color& c) {
   red = c.red;
@@ -19,9 +17,9 @@ Color::Color(const uint8_t red_, const uint8_t green_, const uint8_t blue_) {
 }
 // Create a random color with red, green and blue between min and max inclusive
 Color::Color(const uint8_t min, const uint8_t max) {
-  red = ::random(min, max + 1);
-  green = ::random(min, max + 1);
-  blue = ::random(min, max + 1);
+  red = random(min, max + 1);
+  green = random(min, max + 1);
+  blue = random(min, max + 1);
 }
 // Create a color from a color pallete, by interpolating between entries
 Color::Color(const uint8_t index, const uint8_t* pallete) {
