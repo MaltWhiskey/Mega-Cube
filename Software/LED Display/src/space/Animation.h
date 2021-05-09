@@ -2,53 +2,55 @@
 #define ANIMATION_H
 #include <stdint.h>
 
-#include "Display.h"
-#include "Math3D.h"
-#include "Math8.h"
-#include "Noise.h"
-#include "Timer.h"
+#include "core/Display.h"
+#include "power/Math3D.h"
+#include "power/Math8.h"
+#include "power/Noise.h"
+#include "power/Timer.h"
 /*------------------------------------------------------------------------------
  * ANIMATION INTERFACE
  *----------------------------------------------------------------------------*/
+enum task_t { INACTIVE = 0, STARTING = 1, RUNNING = 2, ENDING = 3 };
+enum anim_t { COLOR, WHITE, NONE, FADE };
+
 class Animation {
+ private:
+  // Timer used to make rendering frequency independent
+  static Timer s_cTimer;
+  // Total pointers in animation pool
+  static uint8_t s_iAnimations;
+  // Pointers to animations in pool
+  static Animation* s_pAnimations[100];
+  // Position in the sequence table
+  static uint16_t s_iSequence;
+
  protected:
   // Reference to the display (initialized only once)
   static Display& display;
-  // Position in Color Wheel, multiplied by 256 for more resolution.
-  static uint16_t colorwheel;
-  // Shared staticnoise object
+  // Shared noise object
   static Noise noise;
-
- private:
-  // Timer used to make rendering frequency independent
-  static Timer m_cTimer;
-  // Total animation pointers in animation list
-  static uint8_t m_iAnimations;
-  // Pointers to animations in an animation list
-  static Animation* m_pAnimations[100];
-  // Current animation in the animation list
-  static uint8_t m_iCurrentAnimation;
-  // Requested animation in the animation list
-  static uint8_t m_iRequestedAnimation;
+  // Postition in color palette << 8 for more resolution
+  uint16_t hue16 = 0;
+  // Animation is active and drawn on the display
+  task_t task = INACTIVE;
+  // How to start animaton, gracefully or otherwise
+  anim_t start_mode = NONE;
+  // How to run the animaton
+  anim_t run_mode = NONE;
+  // How to end animaton, gracefully or otherwise
+  anim_t end_mode = NONE;
 
  public:
-  // Constructor inserts this animation in the list
-  Animation();
-  // virtual destructor
+  // Adds animation to animation pool during construction
+  Animation() { s_pAnimations[s_iAnimations++] = this; };
   virtual ~Animation(){};
-  // draw method needs to be overridden
-  virtual bool draw(float dt) = 0;
-  // init method needs to be overridden
-  virtual void init() = 0;
-  // animation scheduler
-  static void animate();
-  // initialize animation list, first animation and display
+  // Start displaying animations
   static void begin();
-
-  // Cycle through the animations
-  static void next();
-  static void previous();
-  static void set(uint8_t index);
-  static uint8_t get();
+  // Animate all active animations
+  static void animate();
+  // Schedule next animations from sequence
+  static void sequence();
+  // Draws antimation frame respecting elapsed time
+  virtual void draw(float dt) = 0;
 };
 #endif

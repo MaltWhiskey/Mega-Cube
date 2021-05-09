@@ -1,10 +1,16 @@
-#include <Arduino.h>
 #include "Color.h"
+
+#include <Arduino.h>
+
 #include "Math8.h"
 /*------------------------------------------------------------------------------
  * Color CLASS
  *----------------------------------------------------------------------------*/
-Color::Color() {}
+Color::Color() {
+  red = 0;
+  green = 0;
+  blue = 0;
+}
 Color::Color(const Color& c) {
   red = c.red;
   green = c.green;
@@ -46,12 +52,16 @@ Color::Color(const uint8_t scalar, const Color& source, const Color& target) {
   green = map8(scalar, source.g, target.g);
   blue = map8(scalar, source.b, target.b);
 }
-// Create a color blend between 0x00 and 0xff. Scaler determine how much between
+// Scales a color blend between 0x00 and 0xff. Scaler determine how much between
 Color& Color::scale(const uint8_t scalar) {
   red = map8(scalar, red);
   green = map8(scalar, green);
   blue = map8(scalar, blue);
   return *this;
+}
+// Create a color blend between 0x00 and 0xff. Scaler determine how much between
+Color Color::scaled(const uint8_t scalar) const {
+  return Color(map8(scalar, red), map8(scalar, green), map8(scalar, blue));
 }
 bool Color::isBlack() const { return (r | g | b) == 0; }
 bool Color::operator==(const Color& c) const {

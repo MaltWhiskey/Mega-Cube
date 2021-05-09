@@ -4,7 +4,8 @@
 #include <DMAChannel.h>
 #include <stdint.h>
 
-#include "Color.h"
+#include "power/Color.h"
+#include "power/Math3D.h"
 
 // Choose between WS2812 or PL9823
 #define PL9823
@@ -78,8 +79,9 @@ class Display {
   void clear();
   // Get a reference to a color from the cube
   Color &color(const uint8_t x, const uint8_t y, const uint8_t z);
+  // Radiate light from a pixel in the cube
+  void radiate(const Vector3 &, const Color &, float distance);
 };
-
 // Ask compiler to inline this so the function call can be skipped
 inline Color &Display::color(const uint8_t x, const uint8_t y,
                              const uint8_t z) {

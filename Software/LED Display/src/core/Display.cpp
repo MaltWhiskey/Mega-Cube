@@ -1,8 +1,6 @@
 #include "display.h"
 
 #include <Arduino.h>
-
-#include "timer.h"
 /*------------------------------------------------------------------------------
  * DISPLAY CLASS
  *----------------------------------------------------------------------------*/
@@ -32,29 +30,23 @@ void Display::displayReady(void) {
   m_displayAvailable = true;
 }
 
-// Notifies the display that a new frame is ready for displaying. Transfer the
-// cube data to the prep buffer and enable the interrupt to swap the buffers.
+// Notifies the display that a new frame is ready for displaying. Transfer
+// the cube data to the prep buffer and enable the interrupt to swap the
+// buffers.
 void Display::update() {
   // Create the dma buffer from the prep buffer.
   for (uint8_t z = 0; z < depth; z++) {
     for (uint8_t y = 0; y < height; y++) {
       for (uint8_t x = 0; x < width; x++) {
         Color c = color(x, y, z);
-        c = c.scale(64);
-        uint8_t chn = ((x >> 1) & 0x0E) + ((z << 1) & 0xF8) + ((z >> 1) & 0x01);
-        //        uint8_t led = ((x << 4) & 0x30) + ((y ^ (-(x & 1))) & 0x0F) +
-        //                      ((y ^ (-(z & 1))) & 0x8F);
-        uint8_t led = (x << 4) & 0x30;
-        if (x & 1) {
-          led += (15 - y);
-        } else
-          led += y;
+        uint8_t chn = (x >> 1 & 0x0E) + (z << 1 & 0xF8) + (z >> 1 & 1);
+        uint8_t led = (x << 4 & 0x30) + (((0x10 - (x & 1)) ^ y) & 0x0F);
         if (z & 1) {
-          led = 127 - led;
+          led = 0x7F - led;
         }
         uint32_t mask = 1 << chn;
-        uint32_t value = (c.red << 24) + (c.green << 16) + (c.blue << 8);
         uint16_t offset = BITCOUNT * led;
+        uint32_t value = (c.red << 24) + (c.green << 16) + (c.blue << 8);
         for (uint8_t i = 0; i < BITCOUNT; i++) {
           if (value & 0x80000000)
             dmaBufferData[1 - m_dmaBuffer][offset++] |= mask;
@@ -74,6 +66,39 @@ bool Display::available() { return m_displayAvailable; }
 
 // Clear the cube so a new frame can be freshly created.
 void Display::clear() { memset(cube, 0, sizeof(cube)); }
+
+// Radiate between led's. Length = 0% light, 0 = 100% light. Linear
+// interpolated
+void Display::radiate(const Vector3 &origin, const Color &color, float length) {
+  float fx = floor(origin.x);
+  float fy = floor(origin.y);
+  float fz = floor(origin.z);
+  float cx = ceil(origin.x);
+  float cy = ceil(origin.y);
+  float cz = ceil(origin.z);
+
+  Vector3 pixel[] = {Vector3(fx, fy, fz), Vector3(cx, fy, fz),   // front down
+                     Vector3(fx, cy, fz), Vector3(cx, cy, fz),   // front up
+                     Vector3(fx, fy, cz), Vector3(cx, fy, cz),   // back down
+                     Vector3(fx, cy, cz), Vector3(cx, cy, cz)};  // back up
+
+  Vector3 box_l = Vector3(0, 0, 0);
+  Vector3 box_h = Vector3(width, height, depth);
+  for (int i = 0; i < 8; i++) {
+    Vector3 point = pixel[i];
+    if (point.inside(box_l, box_h)) {
+      float intensity = length - (origin - point).magnitude();
+      if (intensity > 0) {
+        Color c1 = cube[(uint8_t)point.x][(uint8_t)point.y][(uint8_t)point.z];
+        Color c2 = color.scaled(255 * intensity);
+        Color c = Color(c1.red > c2.red ? c1.red : c2.red,
+                        c1.green > c2.green ? c1.green : c2.green,
+                        c1.blue > c2.blue ? c1.blue : c2.blue);
+        cube[(uint8_t)point.x][(uint8_t)point.y][(uint8_t)point.z] = c;
+      }
+    }
+  }
+}
 
 const uint8_t Display::gamma8[256] = {
     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
@@ -117,14 +142,14 @@ void Display::setupPLL() {
   CCM_ANALOG_PLL_VIDEO_CLR = CCM_ANALOG_PLL_VIDEO_DIV_SELECT(0x7f) |
                              CCM_ANALOG_PLL_VIDEO_POST_DIV_SELECT(3);
 #if defined PL9823
-  // NUM = 30 bits signed numer, abs(NUM) must be less than DENOM
+  // NUM = 30 bits signed number, abs(NUM) must be less than DENOM
   CCM_ANALOG_PLL_VIDEO_NUM = 17;
-  // DENOM = 30 bits unsigned numer. NUM/DENOM -> fracional loop diver
+  // DENOM = 30 bits unsigned number. NUM/DENOM -> fracional loop diver
   CCM_ANALOG_PLL_VIDEO_DENOM = 27;
 #else
-  // NUM = 30 bits signed numer, abs(NUM) must be less than DENOM
+  // NUM = 30 bits signed number, abs(NUM) must be less than DENOM
   CCM_ANALOG_PLL_VIDEO_NUM = 2;
-  // DENOM = 30 bits unsigned numer. NUM/DENOM -> fracional loop diver
+  // DENOM = 30 bits unsigned number. NUM/DENOM -> fracional loop diver
   CCM_ANALOG_PLL_VIDEO_DENOM = 3;
 #endif
   // Clear dividers before setting the values

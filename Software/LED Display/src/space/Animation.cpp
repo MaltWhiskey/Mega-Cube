@@ -1,85 +1,74 @@
 #include "Animation.h"
+
+#include "fireworks.h"
+#include "sinus.h"
+#include "twinkels.h"
 /*------------------------------------------------------------------------------
  * ANIMATION STATIC DEFINITIONS
  *----------------------------------------------------------------------------*/
-// Position in the color wheel, multiplied by 256 for more resolution.
-uint16_t Animation::colorwheel = 0;
-// Reference to the display (initialized only once)
 Display &Animation::display = Display::instance();
-// Timer used to make rendering frequency independent
-Timer Animation::m_cTimer = Timer();
-// Noise object shared between all subclasses
+Timer Animation::s_cTimer = Timer();
 Noise Animation::noise = Noise();
-// Total animation pointers in animation list
-uint8_t Animation::m_iAnimations = 0;
-// Current animation in the animation list
-uint8_t Animation::m_iCurrentAnimation = 0;
-// Requested animation in the animation list
-uint8_t Animation::m_iRequestedAnimation = 0;
-// Pointers to animations in a animation list max 100
-Animation *Animation::m_pAnimations[100];
-
-// Add this animation to animation list
-Animation::Animation() { m_pAnimations[m_iAnimations++] = this; }
-
-// Allows cycling through the animations
-void Animation::next() {
-  uint8_t requested = m_iCurrentAnimation + 1;
-  if (requested >= m_iAnimations) requested = 0;
-  m_iRequestedAnimation = requested;
-}
-
-// Allows cycling through the animations
-void Animation::previous() {
-  uint8_t requested = m_iCurrentAnimation - 1;
-  if (requested == 0xff) requested = m_iAnimations - 1;
-  m_iRequestedAnimation = requested;
-}
-
-// Allows selecting a specific animation
-void Animation::set(uint8_t requested) {
-  uint8_t current = m_iCurrentAnimation;
-  if (requested != current && requested < m_iAnimations) {
-    m_iRequestedAnimation = requested;
-  }
-}
-
-// Current animation
-uint8_t Animation::get() { return m_iCurrentAnimation; }
+uint8_t Animation::s_iAnimations = 0;
+Animation *Animation::s_pAnimations[100];
+uint16_t Animation::s_iSequence = 0;
+/*------------------------------------------------------------------------------
+ * ANIMATION GLOBAL DEFINITIONS
+ *----------------------------------------------------------------------------*/
+Sinus sinus;
+Fireworks fireworks1;
+Fireworks fireworks2;
+Twinkels twinkels;
+/*----------------------------------------------------------------------------*/
+// Start display asap to minimize PL9823 blue startup
+void Animation::begin() { display.begin(); }
 
 // Render an animation frame, but only if the display allows it
 void Animation::animate() {
   // Only draw to the display if it's available
   if (display.available()) {
-    // These temp variable should make for a thread safe method
-    uint8_t current = m_iCurrentAnimation;
-    uint8_t requested = m_iRequestedAnimation;
-    // Update the animation timer and get deltatime between previous frame
-    m_cTimer.update();
-    // if there are animations present and no out of bounds on current
-    if (m_iAnimations > 0 && current < m_iAnimations) {
-      // draw one animation frame using the deltatime and the display dimensions
-      if (m_pAnimations[current]->draw(m_cTimer.dt())) {
-        // If the animation is finished reinitialize it
-        m_pAnimations[current]->init();
-        Animation::next();
-      }
-      // Check if new animation needs to be initialized and displayed
-      if (current != requested && requested < m_iAnimations) {
-        m_pAnimations[requested]->init();
-        m_iCurrentAnimation = requested;
-      }
-      // Commit current animation frame to the display
-      display.update();
+    // Clear the display before drawing any animations
+    display.clear();
+    // Update the animation timer to determine frame deltatime
+    s_cTimer.update();
+    // draw all active animations from the animation pool
+    uint8_t active_count = 0;
+    for (uint8_t i = 0; i < s_iAnimations; i++) {
+      Animation &animation = *s_pAnimations[i];
+      if (animation.task != INACTIVE) animation.draw(s_cTimer.dt());
+      if (animation.task != INACTIVE) active_count++;
     }
+    if (active_count == 0) sequence();
+    // Commit current animation frame to the display
+    display.update();
   }
 }
 
-void Animation::begin() {
-  // if animations are present, initialize the current one
-  if (m_iAnimations > 0) {
-    m_pAnimations[m_iCurrentAnimation]->init();
+void SEQ_TWINKEL_WHITE_00(void) {
+  twinkels.init(20, NONE, WHITE, NONE);
+  twinkels.speed(0.1f, 1.0f, 2.0f);
+  twinkels.clear();
+}
+void SEQ_TWINKEL_MULTI_00(void) {
+  twinkels.init(20, NONE, COLOR, FADE);
+  twinkels.speed(0.1f, 1.0f, 2.0f);
+}
+void SEQ_SINUS_00(void) {
+  sinus.init(5, 20, 10);
+  sinus.speed(PI, -50);
+}
+void SEQ_FIREWORKS_00(void) {
+  fireworks1.init(5);
+  fireworks2.init(5);
+}
+
+// Animation sequencer jumptable implementation
+void Animation::sequence() {
+  static void (*jump_table[])() =  //
+      {&SEQ_FIREWORKS_00, &SEQ_SINUS_00, &SEQ_TWINKEL_WHITE_00,
+       &SEQ_TWINKEL_MULTI_00};
+  if (s_iSequence >= sizeof(jump_table) / sizeof(void *)) {
+    s_iSequence = 0;
   }
-  // Initialize the display
-  display.begin();
+  jump_table[s_iSequence++]();
 }

@@ -50,6 +50,7 @@ class Color {
   Color(const uint8_t scalar, const Color& source, const Color& target);
 
   Color& scale(const uint8_t scalar);
+  Color scaled(const uint8_t scalar) const;
   Color& operator+=(const Color& c);
   Color& operator-=(const Color& c);
 

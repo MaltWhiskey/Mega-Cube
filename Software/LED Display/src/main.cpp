@@ -1,21 +1,14 @@
+
 #include <Arduino.h>
 
-#include "animation.h"
-#include "fireworks.h"
-#include "sinus.h"
-#include "twinkels.h"
-/*------------------------------------------------------------------------------
- * Global animations. The animation constructor adds these to a list
- *----------------------------------------------------------------------------*/
-Sinus sinus;
-Fireworks fireworks;
-Twinkels twinkel;
+#include "space/animation.h"
 /*------------------------------------------------------------------------------
  * Initialize setup parameters
  *----------------------------------------------------------------------------*/
 void setup() {
   Animation::begin();
   Serial.begin(115200);
+  delay(5000);
 }
 /*------------------------------------------------------------------------------
  * Start the main loop

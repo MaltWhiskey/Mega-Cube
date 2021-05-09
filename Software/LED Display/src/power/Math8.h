@@ -27,4 +27,13 @@ static inline float mapf(float in, float inMin, float inMax, float outMin,
                          float outMax) {
   return (outMax - outMin) * (in - inMin) / (inMax - inMin) + outMin;
 }
+static inline uint8_t qadd8(uint8_t a, uint8_t b) {
+  uint16_t t = a + b;
+  if (t > 255) return 255;
+  return t;
+}
+static inline uint8_t qsub8(uint8_t a, uint8_t b) {
+  if (b > a) return 0;
+  return a - b;
+}
 #endif

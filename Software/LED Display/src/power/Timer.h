@@ -23,6 +23,7 @@ class Timer {
   unsigned long update();
   float dt() const;
   float rt() const;
+  float percent() const;
 
  private:
   // alarm time in seconds
