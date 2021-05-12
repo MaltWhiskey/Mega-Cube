@@ -33,26 +33,29 @@ void Display::displayReady(void) {
 // Notifies the display that a new frame is ready for displaying. Transfer
 // the cube data to the prep buffer and enable the interrupt to swap the
 // buffers.
+//
+// Note : In principle every 24 bit of led data (3 bytes) is rotated and
+// the 3 bytes become bits in 24 bytes with offset chn. Maybe this can be
+// made non-blocking using the pixel pipeline (pxp)?
+//
+// Maybe the rotate left can be implemented in assembly? Not sure if the
+// compiler is smart enough to optimize the shifts as a rotation.
 void Display::update() {
-  // Create the dma buffer from the prep buffer.
-  for (uint8_t z = 0; z < depth; z++) {
+  uint32_t *prepBuffer = dmaBufferData[1 - m_dmaBuffer];
+  memset(prepBuffer, 0, sizeof(dmaBufferData[0]));
+  for (uint8_t x = 0; x < width; x++) {
     for (uint8_t y = 0; y < height; y++) {
-      for (uint8_t x = 0; x < width; x++) {
-        Color c = color(x, y, z);
+      uint8_t led = 0x7F - (x << 4 & 0x30) - (((0x10 - (x & 1)) ^ y) & 0x0F);
+      for (uint8_t z = 0; z < depth; z++) {
+        led = 0x7F - led;
+        uint32_t *offset = prepBuffer + led * BITCOUNT;
         uint8_t chn = (x >> 1 & 0x0E) + (z << 1 & 0xF8) + (z >> 1 & 1);
-        uint8_t led = (x << 4 & 0x30) + (((0x10 - (x & 1)) ^ y) & 0x0F);
-        if (z & 1) {
-          led = 0x7F - led;
-        }
+        uint32_t value = color(x, y, z).bits();
+        value = (value << (1 + chn)) | (value >> (31 - chn));
         uint32_t mask = 1 << chn;
-        uint16_t offset = BITCOUNT * led;
-        uint32_t value = (c.red << 24) + (c.green << 16) + (c.blue << 8);
         for (uint8_t i = 0; i < BITCOUNT; i++) {
-          if (value & 0x80000000)
-            dmaBufferData[1 - m_dmaBuffer][offset++] |= mask;
-          else
-            dmaBufferData[1 - m_dmaBuffer][offset++] &= ~mask;
-          value <<= 1;
+          *offset++ |= (value & mask);
+          value = (value << 1) | (value >> 31);
         }
       }
     }

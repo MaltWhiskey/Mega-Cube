@@ -52,5 +52,7 @@ class Animation {
   static void sequence();
   // Draws antimation frame respecting elapsed time
   virtual void draw(float dt) = 0;
+  // Get current fps
+  static float fps();
 };
 #endif

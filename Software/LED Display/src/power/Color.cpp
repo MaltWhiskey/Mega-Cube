@@ -90,6 +90,7 @@ Color& Color::operator-=(const Color& c) {
   t > 255 ? b = 0 : b = t;
   return *this;
 }
+uint32_t Color::bits() { return (red << 24) | (green << 16) | (blue << 8); }
 
 const Color Color::BLACK(0x00, 0x00, 0x00);
 const Color Color::WHITE(0xFF, 0xFF, 0xFF);

@@ -43,6 +43,8 @@ void Animation::animate() {
     display.update();
   }
 }
+// Get fps, assuming animate has been called so t > 0
+float Animation::fps() { return 1 / s_cTimer.dt(); }
 
 void SEQ_TWINKEL_WHITE_00(void) {
   twinkels.init(20, NONE, WHITE, NONE);

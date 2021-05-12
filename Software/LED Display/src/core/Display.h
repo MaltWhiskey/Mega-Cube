@@ -43,10 +43,10 @@ class Display {
   // Buffer currently being used by dma
   volatile uint8_t m_dmaBuffer = 0;
   // Double buffered dma and prep data to prevent display artifacts
-  volatile uint32_t dmaBufferData[2][BITCOUNT * LEDCOUNT] = {};
+  uint32_t dmaBufferData[2][BITCOUNT * LEDCOUNT] = {};
   // Dma buffer for high signal and reset/latch low signal
-  volatile uint32_t dmaBufferHigh[1] = {0xFFFFFFFF};
-  volatile uint32_t dmaBufferLow[50] = {};
+  uint32_t dmaBufferHigh[1] = {0xFFFFFFFF};
+  uint32_t dmaBufferLow[50] = {};
   // See if the display is available to accept a new frame
   volatile uint8_t m_displayAvailable = true;
   // Need 2 dma channels for sending the data to PL9823 LED's
