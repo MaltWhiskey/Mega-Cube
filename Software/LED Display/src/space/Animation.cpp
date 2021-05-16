@@ -2,6 +2,7 @@
 
 #include "fireworks.h"
 #include "sinus.h"
+#include "text.h"
 #include "twinkels.h"
 /*------------------------------------------------------------------------------
  * ANIMATION STATIC DEFINITIONS
@@ -19,6 +20,7 @@ Sinus sinus;
 Fireworks fireworks1;
 Fireworks fireworks2;
 Twinkels twinkels;
+Text text;
 /*----------------------------------------------------------------------------*/
 // Start display asap to minimize PL9823 blue startup
 void Animation::begin() { display.begin(); }
