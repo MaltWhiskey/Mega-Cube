@@ -85,7 +85,7 @@ void TFT::begin() {
   //  Serial.println("initialization failed.");
   // }
   //  root2 = SD.open("/");
-  //  printDirectory(root2, 0);
+  //  printDirectory(root2, 0);..
 
   digitalWrite(TFT_RESET, HIGH);
   delay(100);

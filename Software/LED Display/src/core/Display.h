@@ -87,4 +87,5 @@ inline Color &Display::color(const uint8_t x, const uint8_t y,
                              const uint8_t z) {
   return cube[x][y][z];
 }
+
 #endif
