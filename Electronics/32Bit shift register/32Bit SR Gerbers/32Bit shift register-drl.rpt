@@ -1,0 +1,26 @@
+Drill report for /Users/MaltWhiskey/Documents/Projects/LedCube16x16x16/Electronics/32Bit shift register/32Bit shift register.kicad_pcb
+Created on 2020 October 16, Friday 13:13:35
+
+Copper Layer Stackup:
+    =============================================================
+    L1 :  F.Cu                      front
+    L2 :  B.Cu                      back
+
+
+Drill file '32Bit shift register-PTH.drl' contains
+    plated through holes:
+    =============================================================
+    T1  0.40mm  0.016"  (52 holes)
+    T2  0.80mm  0.031"  (74 holes)
+    T3  1.00mm  0.039"  (38 holes)
+    T4  1.52mm  0.060"  (2 holes)
+
+    Total plated holes count 166
+
+
+Drill file '32Bit shift register-NPTH.drl' contains
+    unplated through holes:
+    =============================================================
+    T1  2.20mm  0.087"  (4 holes)
+
+    Total unplated holes count 4

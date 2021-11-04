@@ -58,6 +58,7 @@ class Twinkels : public Animation {
             } else {
               delta[x][y][z] = 0;
               colors[x][y][z] = Color::BLACK;
+              display.color(x, y, z) = Color::BLACK;
             }
             pixels_active = true;
           }

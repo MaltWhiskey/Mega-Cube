@@ -1,0 +1,72 @@
+#ifndef TDWS2811_h
+#define TDWS2811_h
+#define FLEXMODULE 0
+#define NUMLEDS 1000
+
+#include <Arduino.h>
+#include <DMAChannel.h>
+#include <FlexIO_t4.h>
+
+#define CCM_ANALOG_PLL_VIDEO_ENABLE_SHIFT        (13U)
+#define CCM_ANALOG_PLL_VIDEO_BYPASS_MASK (0x10000U)
+#define CCM_ANALOG_PLL_VIDEO_BYPASS_CLK_SRC_MASK (0xC000U)
+#define CCM_ANALOG_PLL_VIDEO_BYPASS_CLK_SRC_SHIFT (14U)
+#define CCM_ANALOG_PLL_VIDEO_BYPASS_CLK_SRC(x)   (((uint32_t)(((uint32_t)(x)) << CCM_ANALOG_PLL_VIDEO_BYPASS_CLK_SRC_SHIFT)) & CCM_ANALOG_PLL_VIDEO_BYPASS_CLK_SRC_MASK)
+#define CCM_ANALOG_PLL_VIDEO_NUM_A_MASK          (0x3FFFFFFFU)
+#define CCM_ANALOG_PLL_VIDEO_NUM_A_SHIFT         (0U)
+#define CCM_ANALOG_PLL_VIDEO_NUM_A(x)            (((uint32_t)(((uint32_t)(x)) << CCM_ANALOG_PLL_VIDEO_NUM_A_SHIFT)) & CCM_ANALOG_PLL_VIDEO_NUM_A_MASK)
+#define CCM_ANALOG_PLL_VIDEO_DENOM_B_MASK        (0x3FFFFFFFU)
+#define CCM_ANALOG_PLL_VIDEO_DENOM_B_SHIFT       (0U)
+#define CCM_ANALOG_PLL_VIDEO_DENOM_B(x)          (((uint32_t)(((uint32_t)(x)) << CCM_ANALOG_PLL_VIDEO_DENOM_B_SHIFT)) & CCM_ANALOG_PLL_VIDEO_DENOM_B_MASK)
+#define CCM_ANALOG_PLL_VIDEO_DIV_SELECT_MASK     (0x7FU)
+#define CCM_ANALOG_PLL_VIDEO_POWERDOWN_MASK      (0x1000U)
+#define CCM_ANALOG_PLL_VIDEO_ENABLE_MASK         (0x2000U)
+#define CCM_ANALOG_PLL_VIDEO_POST_DIV_SELECT_MASK (0x180000U)
+#define CCM_ANALOG_PLL_VIDEO_POST_DIV_SELECT_SHIFT (19U)
+#define CCM_ANALOG_PLL_VIDEO_POST_DIV_SELECT(x)  (((uint32_t)(((uint32_t)(x)) << CCM_ANALOG_PLL_VIDEO_POST_DIV_SELECT_SHIFT)) & CCM_ANALOG_PLL_VIDEO_POST_DIV_SELECT_MASK)
+#define CCM_ANALOG_PLL_VIDEO_DIV_SELECT_MASK     (0x7FU)
+#define CCM_ANALOG_PLL_VIDEO_DIV_SELECT_SHIFT    (0U)
+#define CCM_ANALOG_PLL_VIDEO_DIV_SELECT(x)       (((uint32_t)(((uint32_t)(x)) << CCM_ANALOG_PLL_VIDEO_DIV_SELECT_SHIFT)) & CCM_ANALOG_PLL_VIDEO_DIV_SELECT_MASK)
+#define CCM_ANALOG_MISC2_VIDEO_DIV_MASK          (0xC0000000U)
+#define CCM_ANALOG_MISC2_VIDEO_DIV_SHIFT         (30U)
+#define CCM_ANALOG_MISC2_VIDEO_DIV(x)            (((uint32_t)(((uint32_t)(x)) << CCM_ANALOG_MISC2_VIDEO_DIV_SHIFT)) & CCM_ANALOG_MISC2_VIDEO_DIV_MASK)
+#define CCM_ANALOG_PLL_VIDEO_LOCK_MASK           (0x80000000U)
+
+class TDWS2811
+{
+  public:
+    TDWS2811(uint16_t);
+    void flipBuffers(void);
+    uint32_t *getActiveBuffer(void);
+    uint32_t *getInactiveBuffer(void);
+    int getBufferLength(void);
+    int setLed(uint8_t channel, uint8_t led, uint8_t rVal, uint8_t gVal, uint8_t bVal);
+
+  private:
+    static void _shifterIsr(void);
+    static void _dmaIsr(void);
+    void shifterIsr(void);
+    void dmaIsr(void);
+    void configurePins(void);
+    void configureFlexIO(void);
+    void configurePll (void);
+    void configureInterrupts(void);
+    void configureDma(void);
+    void dumpDMA_TCD(DMAChannel *);
+    FlexIOHandler *pFlex;
+    uint32_t serialInterruptEnable;
+    DMAChannel dmaChannel;
+    DMASetting dmaSetting[4];
+    uint8_t activeBuffer=0;
+//    uint32_t frameBuffer[2][24*NUMLEDS]={{0xFFFFFFFF,0,0xFFFFFFFF,0,0xFFFFFFFF,0,0xFFFFFFFF,0,0xFFFFFFFF},{0,0xFFFFFFFF,0,0xFFFFFFFF,0,0xFFFFFFFF,0,0xFFFFFFFF,0}};
+    uint32_t frameBuffer[2][24*NUMLEDS]={{0},{0}};
+//    uint32_t **frameBuffer;
+    volatile const uint32_t zeros[40]={0};
+    volatile const uint32_t ones[2]={0xFFFFFFFF,0xFFFFFFFF};
+    static TDWS2811 *pTD;
+    IMXRT_FLEXIO_t *p = &pFlex->port();
+    const FlexIOHandler::FLEXIO_Hardware_t *hw = &pFlex->hardware();
+    uint32_t ledCnt;
+};
+
+#endif

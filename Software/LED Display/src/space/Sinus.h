@@ -62,21 +62,28 @@ class Sinus : public Animation {
         scale = timer.percent() * 255;
     }
 
-    for (uint8_t x = 0; x < display.width; x++) {
-      // convert cube x to floating point coordinate between x_min and x_max
-      float xprime = mapf(x, 0, display.width - 1, x_min, x_max);
-      for (uint8_t z = 0; z < display.depth; z++) {
-        // convert cube z to floating point coordinate between z_min and z_max
-        float zprime = mapf(z, 0, display.depth - 1, z_min, z_max);
-        // determine y floating point coordinate
-        float yprime = sinf(phase + sqrtf(xprime * xprime + zprime * zprime));
-        // convert floating point y back to cube y
-        float y = mapf(yprime, -1, 1, 0, display.height - 1);
-        // display voxel on the cube
-        Color c = Color((hue16 >> 8) + y * 10, &RainbowGradientPalette[0]);
-        display.radiate(Vector3(x, z, y), c.scale(scale), 1.0f);
-      }
-    }
+    for (int x = 0; x < display.width; x++)
+      for (int y = 0; y < display.height; y++)
+        for (int z = 0; z < display.depth; z++) {
+          Color c = Color((hue16 >> 8) + y * 10, &RainbowGradientPalette[0]);
+          display.color(x, y, z) = c;
+        }
+    // for (uint8_t x = 0; x < display.width; x++) {
+    //   // convert cube x to floating point coordinate between x_min and
+    //   x_max float xprime = mapf(x, 0, display.width - 1, x_min, x_max); for
+    //   (uint8_t z = 0; z < display.depth; z++) {
+    //     // convert cube z to floating point coordinate between z_min and
+    //     z_max float zprime = mapf(z, 0, display.depth - 1, z_min, z_max);
+    //     // determine y floating point coordinate
+    //     float yprime = sinf(phase + sqrtf(xprime * xprime + zprime *
+    //     zprime));
+    //     // convert floating point y back to cube y
+    //     float y = mapf(yprime, -1, 1, 0, display.height - 1);
+    //     // display voxel on the cube
+    //     Color c = Color((hue16 >> 8) + y * 10, &RainbowGradientPalette[0]);
+    //     display.radiate(Vector3(x, z, y), c.scale(scale), 1.0f);
+    //   }
+    // }
   }
 };
 #endif
