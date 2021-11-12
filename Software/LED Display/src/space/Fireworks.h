@@ -42,19 +42,19 @@ class Fireworks : public Animation {
   void init(uint8_t repeats_) {
     repeats = repeats_;
     if (repeats > 0)
-      task = RUNNING;
+      task = task_state_t::RUNNING;
     else {
-      task = INACTIVE;
+      task = task_state_t::INACTIVE;
       return;
     }
     // calculate source normally divided from source area
-    source = Vector3(noise.nextGaussian((float)display.width / 2.0f, 2.0f), 0,
-                     noise.nextGaussian((float)display.depth / 2.0f, 2.0f));
+    source = Vector3(noise.nextGaussian((float)Display::width / 2.0f, 2.0f), 0,
+                     noise.nextGaussian((float)Display::depth / 2.0f, 2.0f));
     // calculate targets normally divided from target area
     target =
-        Vector3(noise.nextGaussian((float)display.width / 2.0f, 2.0f),
-                noise.nextGaussian((float)8.0f * display.height / 10.0f, 1.0f),
-                noise.nextGaussian((float)display.depth / 2.0f, 2.0f));
+        Vector3(noise.nextGaussian((float)Display::width / 2.0f, 2.0f),
+                noise.nextGaussian((float)8.0f * Display::height / 10.0f, 1.0f),
+                noise.nextGaussian((float)Display::depth / 2.0f, 2.0f));
     // Assign a time in seconds to reach the target
     float t = noise.nextGaussian(0.60f, 0.25f);
     // Determine directional velocities in pixels per second
@@ -93,9 +93,9 @@ class Fireworks : public Animation {
         }
       } else if (missile.position.inside(
                      Vector3(0, 0, 0),
-                     Vector3(display.width, display.height, display.depth)))
-        display.color(missile.position.x, missile.position.y,
-                      missile.position.z) = Color(Color::WHITE);
+                     Vector3(Display::width, Display::height, Display::depth)))
+        Display::cube[(uint8_t)missile.position.x][(uint8_t)missile.position.y]
+                    [(uint8_t)missile.position.z] = Color(Color::WHITE);
     }
     // Explosion drawing mode
     if (target.y == 0) {
@@ -119,9 +119,10 @@ class Fireworks : public Animation {
         c.scale(debris[i].brightness * 255);
         if (debris[i].position.inside(
                 Vector3(0, 0, 0),
-                Vector3(display.width, display.height, display.depth)))
-          display.color(debris[i].position.x, debris[i].position.y,
-                        debris[i].position.z) += c;
+                Vector3(Display::width, Display::height, Display::depth)))
+          Display::cube[(uint8_t)debris[i].position.x]
+                      [(uint8_t)debris[i].position.y]
+                      [(uint8_t)debris[i].position.z] += c;
       }
       if (visible == 0) init(--repeats);
     }

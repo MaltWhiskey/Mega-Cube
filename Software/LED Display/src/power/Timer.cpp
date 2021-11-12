@@ -29,6 +29,9 @@ unsigned long Timer::update() {
 float Timer::dt() const { return m_deltaTime / 1000000.0f; }
 float Timer::rt() const { return m_runTime / 1000000.0f; }
 float Timer::percent() const {
-  float threshold = m_runTime / (m_alarmTime * 1000000.0f);
-  return threshold;
+  if (m_alarmTime > 0) {
+    float threshold = m_runTime / (m_alarmTime * 1000000.0f);
+    return threshold;
+  }
+  return 0;
 }

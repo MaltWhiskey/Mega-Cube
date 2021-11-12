@@ -1,8 +1,13 @@
 
 #include <Arduino.h>
 
-#include "core/tft.h"
-#include "space/animation.h"
+#include "Core/Config.h"
+#include "Core/tft.h"
+#include "Space/animation.h"
+/*---------------------------------------------------------------------------------------
+ * Globals
+ *-------------------------------------------------------------------------------------*/
+Config config;
 /*------------------------------------------------------------------------------
  * Initialize setup parameters
  *----------------------------------------------------------------------------*/
@@ -15,11 +20,11 @@ void setup() {
 /*------------------------------------------------------------------------------
  * Start the main loop
  *----------------------------------------------------------------------------*/
-Timer t = 1.0f;
 void loop() {
-  Animation::animate();
   // Print FPS once every second
-  if (t.update()) {
+  static Timer print_interval = 1.0f;
+  Animation::animate();
+  if (print_interval.update()) {
     Serial.printf("FPS=%1.2f\n", Animation::fps());
   }
   // TFT::instance().loop();

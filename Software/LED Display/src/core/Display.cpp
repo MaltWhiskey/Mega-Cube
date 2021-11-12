@@ -1,33 +1,58 @@
-#include "display.h"
+#include "Display.h"
 
 #include <Arduino.h>
 /*------------------------------------------------------------------------------
  * DISPLAY CLASS
  *----------------------------------------------------------------------------*/
+volatile uint8_t Display::dmaBuffer = 0;
+volatile boolean Display::displayAvailable = true;
+uint32_t Display::dmaBufferData[2][BITCOUNT * LEDCOUNT] = {};
+uint32_t Display::dmaBufferHigh[1] = {0xFFFFFFFF};
+uint32_t Display::dmaBufferLow[50] = {};
+DMAChannel Display::dmaChannel[2];
+DMASetting Display::dmaSetting[6];
+Color Display::cube[width][height][depth];
+const uint8_t Display::gamma8[256] = {
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   1,   1,
+    1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   2,   2,   2,   2,
+    2,   2,   2,   2,   3,   3,   3,   3,   3,   3,   3,   4,   4,   4,   4,
+    4,   5,   5,   5,   5,   6,   6,   6,   6,   7,   7,   7,   7,   8,   8,
+    8,   9,   9,   9,   10,  10,  10,  11,  11,  11,  12,  12,  13,  13,  13,
+    14,  14,  15,  15,  16,  16,  17,  17,  18,  18,  19,  19,  20,  20,  21,
+    21,  22,  22,  23,  24,  24,  25,  25,  26,  27,  27,  28,  29,  29,  30,
+    31,  32,  32,  33,  34,  35,  35,  36,  37,  38,  39,  39,  40,  41,  42,
+    43,  44,  45,  46,  47,  48,  49,  50,  50,  51,  52,  54,  55,  56,  57,
+    58,  59,  60,  61,  62,  63,  64,  66,  67,  68,  69,  70,  72,  73,  74,
+    75,  77,  78,  79,  81,  82,  83,  85,  86,  87,  89,  90,  92,  93,  95,
+    96,  98,  99,  101, 102, 104, 105, 107, 109, 110, 112, 114, 115, 117, 119,
+    120, 122, 124, 126, 127, 129, 131, 133, 135, 137, 138, 140, 142, 144, 146,
+    148, 150, 152, 154, 156, 158, 160, 162, 164, 167, 169, 171, 173, 175, 177,
+    180, 182, 184, 186, 189, 191, 193, 196, 198, 200, 203, 205, 208, 210, 213,
+    215, 218, 220, 223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252,
+    255};
+
 void Display::begin() {
   setupPLL();
   setupFIO();
   setupDMA();
 }
-// Static interrupt handler, delegate to the only instance
-void Display::interruptAtCompletion(void) {
-  Display::instance().displayReady();
-}
+
 // Triggered after all led data is sent but before reset/latch
 void Display::displayReady(void) {
   // First clear the interrupt flag to avoid retriggering
   dmaChannel[0].clearInterrupt();
   // Swap dma buffer if a new one is available
-  if (!m_displayAvailable) {
+  if (!displayAvailable) {
     // The prep buffer becomes the dma buffer and visa versa
-    m_dmaBuffer = 1 - m_dmaBuffer;
-    dmaSetting[0].sourceBuffer(dmaBufferData[m_dmaBuffer],
+    dmaBuffer = 1 - dmaBuffer;
+    dmaSetting[0].sourceBuffer(dmaBufferData[dmaBuffer],
                                sizeof(dmaBufferData[0]));
-    dmaSetting[4].sourceBuffer(dmaBufferData[m_dmaBuffer],
+    dmaSetting[4].sourceBuffer(dmaBufferData[dmaBuffer],
                                sizeof(dmaBufferData[0]));
   }
   // The display is available to accept cube data
-  m_displayAvailable = true;
+  displayAvailable = true;
 }
 
 // Notifies the display that a new frame is ready for displaying. Transfer
@@ -41,37 +66,36 @@ void Display::displayReady(void) {
 // Maybe the rotate left can be implemented in assembly? Not sure if the
 // compiler is smart enough to optimize the shifts as a rotation.
 void Display::update() {
-  uint32_t *prepBuffer = dmaBufferData[1 - m_dmaBuffer];
-  memset(prepBuffer, 0, sizeof(dmaBufferData[0]));
-  for (uint8_t x = 0; x < width; x++) {
-    for (uint8_t y = 0; y < height; y++) {
-      uint8_t led = 0x7F - (x << 4 & 0x30) - (((0x10 - (x & 1)) ^ y) & 0x0F);
-      for (uint8_t z = 0; z < depth; z++) {
-        led = 0x7F - led;
-        uint32_t *offset = prepBuffer + led * BITCOUNT;
-        uint8_t chn = (x >> 1 & 0x0E) + (z << 1 & 0xF8) + (z >> 1 & 1);
-        uint32_t value = color(x, y, z).bits();
-        value = (value << (1 + chn)) | (value >> (31 - chn));
-        uint32_t mask = 1 << chn;
-        for (uint8_t i = 0; i < BITCOUNT; i++) {
-          *offset++ |= (value & mask);
-          value = (value << 1) | (value >> 31);
+  if (displayAvailable) {
+    uint32_t *prepBuffer = dmaBufferData[1 - dmaBuffer];
+    memset(prepBuffer, 0, sizeof(dmaBufferData[0]));
+    for (uint8_t x = 0; x < width; x++) {
+      for (uint8_t y = 0; y < height; y++) {
+        uint8_t led = 0x7F - (x << 4 & 0x30) - (((0x10 - (x & 1)) ^ y) & 0x0F);
+        for (uint8_t z = 0; z < depth; z++) {
+          led = 0x7F - led;
+          uint32_t *offset = prepBuffer + led * BITCOUNT;
+          uint8_t chn = (x >> 1 & 0x0E) + (z << 1 & 0xF8) + (z >> 1 & 1);
+          uint32_t value = cube[x][y][z].bits();
+          value = (value << (1 + chn)) | (value >> (31 - chn));
+          uint32_t mask = 1 << chn;
+          for (uint8_t i = 0; i < BITCOUNT; i++) {
+            *offset++ |= (value & mask);
+            value = (value << 1) | (value >> 31);
+          }
         }
       }
     }
+    // Writing to the cube data is not allowed to prevent frame tearing
+    displayAvailable = false;
   }
-  // Writing to the cube data is not allowed to prevent frame tearing
-  m_displayAvailable = false;
 }
-
 // Check if the display is available to accept new cube data
-bool Display::available() { return m_displayAvailable; }
-
+bool Display::available() { return displayAvailable; }
 // Clear the cube so a new frame can be freshly created.
 void Display::clear() { memset(cube, 0, sizeof(cube)); }
 
-// Radiate between led's. Length = 0% light, 0 = 100% light. Linear
-// interpolated
+// Radiate between led's. Length = 0% light, 0 = 100% light. Linear interpolated
 void Display::radiate(const Vector3 &origin, const Color &color, float length) {
   float fx = floor(origin.x);
   float fy = floor(origin.y);
@@ -102,26 +126,6 @@ void Display::radiate(const Vector3 &origin, const Color &color, float length) {
     }
   }
 }
-
-const uint8_t Display::gamma8[256] = {
-    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   1,   1,
-    1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   2,   2,   2,   2,
-    2,   2,   2,   2,   3,   3,   3,   3,   3,   3,   3,   4,   4,   4,   4,
-    4,   5,   5,   5,   5,   6,   6,   6,   6,   7,   7,   7,   7,   8,   8,
-    8,   9,   9,   9,   10,  10,  10,  11,  11,  11,  12,  12,  13,  13,  13,
-    14,  14,  15,  15,  16,  16,  17,  17,  18,  18,  19,  19,  20,  20,  21,
-    21,  22,  22,  23,  24,  24,  25,  25,  26,  27,  27,  28,  29,  29,  30,
-    31,  32,  32,  33,  34,  35,  35,  36,  37,  38,  39,  39,  40,  41,  42,
-    43,  44,  45,  46,  47,  48,  49,  50,  50,  51,  52,  54,  55,  56,  57,
-    58,  59,  60,  61,  62,  63,  64,  66,  67,  68,  69,  70,  72,  73,  74,
-    75,  77,  78,  79,  81,  82,  83,  85,  86,  87,  89,  90,  92,  93,  95,
-    96,  98,  99,  101, 102, 104, 105, 107, 109, 110, 112, 114, 115, 117, 119,
-    120, 122, 124, 126, 127, 129, 131, 133, 135, 137, 138, 140, 142, 144, 146,
-    148, 150, 152, 154, 156, 158, 160, 162, 164, 167, 169, 171, 173, 175, 177,
-    180, 182, 184, 186, 189, 191, 193, 196, 198, 200, 203, 205, 208, 210, 213,
-    215, 218, 220, 223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252,
-    255};
 
 /****************************************************************************
  * Set up PLL5 (also known as "VIDEO PLL")
@@ -207,7 +211,7 @@ void Display::setupFIO() {
   *portConfigRegister(WCK) = 0x14;
 
   *portModeRegister(BCK) |= digitalPinToBitMask(BCK);
-  *portControlRegister(BCK) = IOMUXC_PAD_DSE(6) | IOMUXC_PAD_SPEED(1);
+  *portControlRegister(BCK) = IOMUXC_PAD_DSE(5) | IOMUXC_PAD_SPEED(1);
   // SION + ALT4 (FLEXIO2_FLEXIO00) (IOMUXC_SW_MUX_CTL_PAD_GPIO_B0_00)
   *portConfigRegister(BCK) = 0x14;
 
@@ -343,7 +347,7 @@ void Display::setupFIO() {
 
 void Display::setupDMA() {
   // TCD 0 transfers the active dma buffer data to SHIFTBUF[1].
-  dmaSetting[0].sourceBuffer(dmaBufferData[m_dmaBuffer],
+  dmaSetting[0].sourceBuffer(dmaBufferData[dmaBuffer],
                              sizeof(dmaBufferData[0]));
   dmaSetting[0].destination(IMXRT_FLEXIO2_S.SHIFTBUFBIS[1]);
   dmaSetting[0].replaceSettingsOnCompletion(dmaSetting[1]);
@@ -366,7 +370,7 @@ void Display::setupDMA() {
   dmaSetting[3].replaceSettingsOnCompletion(dmaSetting[0]);
 
   // TCD 4 = TCD 0 for SHIFBUF[2]
-  dmaSetting[4].sourceBuffer(dmaBufferData[m_dmaBuffer],
+  dmaSetting[4].sourceBuffer(dmaBufferData[dmaBuffer],
                              sizeof(dmaBufferData[0]));
   dmaSetting[4].destination(IMXRT_FLEXIO2_S.SHIFTBUFBIS[2]);
   dmaSetting[4].replaceSettingsOnCompletion(dmaSetting[5]);
@@ -384,7 +388,7 @@ void Display::setupDMA() {
   dmaChannel[0].triggerAtHardwareEvent(DMAMUX_SOURCE_FLEXIO2_REQUEST1);
   // Attach interrupt to dma channel 0. The interrupt is enabled in update
   // and disabled again in the ISR.
-  dmaChannel[0].attachInterrupt(&interruptAtCompletion);
+  dmaChannel[0].attachInterrupt(&displayReady);
   // Bit pattern for PL9823 leds: High, Data, Data, Low
   // Bit pattern for WS2812 leds: High, Data, Low, Low
 #if defined PL9823

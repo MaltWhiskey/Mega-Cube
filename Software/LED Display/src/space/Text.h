@@ -20,7 +20,7 @@ class Text : public Animation {
 
  public:
   void init(float fade_in_, float time_, float fade_out_) {
-    task = STARTING;
+    task = task_state_t::STARTING;
     timer = fade_in_;
 
     phase = 0.0f;
@@ -39,42 +39,48 @@ class Text : public Animation {
     hue16 += (int16_t)(255 * hue_speed * dt);
 
     uint8_t scale = 0;
-    if (task == ENDING) {
+    if (task == task_state_t::ENDING) {
       if (timer.update()) {
-        task = INACTIVE;
+        task = task_state_t::INACTIVE;
         scale = 0;
       } else
         scale = (1 - timer.percent()) * 255;
     }
-    if (task == RUNNING) {
+    if (task == task_state_t::RUNNING) {
       if (timer.update()) {
-        task = ENDING;
+        task = task_state_t::ENDING;
         timer = fade_out;
       }
       scale = 255;
     }
-    if (task == STARTING) {
+    if (task == task_state_t::STARTING) {
       if (timer.update()) {
-        task = RUNNING;
+        task = task_state_t::RUNNING;
         timer = time;
         scale = 255;
       } else
         scale = timer.percent() * 255;
     }
+    // for (int x = 0; x < Display::width; x++)
+    //   for (int y = 0; y < Display::height; y++)
+    //     for (int z = 0; z < Display::depth; z++) {
+    //       Color c = Color((hue16 >> 8) + y * 10, &RainbowGradientPalette[0]);
+    //       Display::cube[x][y][z] = c;
+    //     }
 
-    for (uint8_t x = 0; x < display.width; x++) {
+    for (uint8_t x = 0; x < Display::width; x++) {
       // convert cube x to floating point coordinate between x_min and x_max
-      float xprime = mapf(x, 0, display.width - 1, x_min, x_max);
-      for (uint8_t z = 0; z < display.depth; z++) {
+      float xprime = mapf(x, 0, Display::width - 1, x_min, x_max);
+      for (uint8_t z = 0; z < Display::depth; z++) {
         // convert cube z to floating point coordinate between z_min and z_max
-        float zprime = mapf(z, 0, display.depth - 1, z_min, z_max);
+        float zprime = mapf(z, 0, Display::depth - 1, z_min, z_max);
         // determine y floating point coordinate
         float yprime = sinf(phase + sqrtf(xprime * xprime + zprime * zprime));
         // convert floating point y back to cube y
-        float y = mapf(yprime, -1, 1, 0, display.height - 1);
+        float y = mapf(yprime, -1, 1, 0, Display::height - 1);
         // display voxel on the cube
         Color c = Color((hue16 >> 8) + y * 10, &RainbowGradientPalette[0]);
-        display.radiate(Vector3(x, z, y), c.scale(scale), 1.0f);
+        Display::radiate(Vector3(x, z, y), c.scale(scale), 1.0f);
       }
     }
   }
