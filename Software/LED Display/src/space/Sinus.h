@@ -15,7 +15,6 @@ class Sinus : public Animation {
 
   Timer timer;
   float time_duration;
-  float time_fade_in;
   float time_fade_out;
 
  public:
@@ -24,7 +23,6 @@ class Sinus : public Animation {
     timer = fade_in;
 
     phase = 0.0f;
-    time_fade_in = fade_in;
     time_duration = duration;
     time_fade_out = fade_out;
   }
@@ -72,7 +70,7 @@ class Sinus : public Animation {
         // convert floating point y back to cube y
         float y = mapf(yprime, -1, 1, 0, Display::height - 1);
         // display voxel on the cube
-        Color c = Color((hue16 >> 8) + y * 10, &RainbowGradientPalette[0]);
+        Color c = Color((hue16 >> 8) + y * 10, RainbowGradientPalette);
         Display::radiate(Vector3(x, z, y), c.scale(scale), 1.0f);
       }
     }

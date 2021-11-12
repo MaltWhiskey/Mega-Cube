@@ -95,7 +95,7 @@ class Fireworks : public Animation {
                      Vector3(0, 0, 0),
                      Vector3(Display::width, Display::height, Display::depth)))
         Display::cube[(uint8_t)missile.position.x][(uint8_t)missile.position.y]
-                    [(uint8_t)missile.position.z] = Color(Color::WHITE);
+                     [(uint8_t)missile.position.z] = Color(Color::WHITE);
     }
     // Explosion drawing mode
     if (target.y == 0) {
@@ -121,8 +121,8 @@ class Fireworks : public Animation {
                 Vector3(0, 0, 0),
                 Vector3(Display::width, Display::height, Display::depth)))
           Display::cube[(uint8_t)debris[i].position.x]
-                      [(uint8_t)debris[i].position.y]
-                      [(uint8_t)debris[i].position.z] += c;
+                       [(uint8_t)debris[i].position.y]
+                       [(uint8_t)debris[i].position.z] += c;
       }
       if (visible == 0) init(--repeats);
     }

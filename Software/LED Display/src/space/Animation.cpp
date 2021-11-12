@@ -1,9 +1,11 @@
 #include "Animation.h"
 
-#include "fireworks.h"
-#include "sinus.h"
-#include "text.h"
-#include "twinkels.h"
+#include "Atoms.h"
+#include "Fireworks.h"
+#include "Helix.h"
+#include "Sinus.h"
+#include "Starfield.h"
+#include "Twinkels.h"
 /*------------------------------------------------------------------------------
  * ANIMATION STATIC DEFINITIONS
  *----------------------------------------------------------------------------*/
@@ -17,7 +19,11 @@ Sinus sinus;
 Fireworks fireworks1;
 Fireworks fireworks2;
 Twinkels twinkels;
-Animation *Animations[] = {&sinus, &fireworks1, &fireworks2, &twinkels};
+Starfield starfield;
+Helix helix;
+Atoms atoms;
+Animation *Animations[] = {&atoms,      &sinus,    &starfield, &fireworks1,
+                           &fireworks2, &twinkels, &helix};
 const uint8_t ANIMATIONS = sizeof(Animations) / sizeof(Animation *);
 /*----------------------------------------------------------------------------*/
 // Start display asap to minimize PL9823 blue startup
@@ -87,11 +93,20 @@ void SEQ_FIREWORKS_00(void) {
   fireworks1.init(5);
   fireworks2.init(5);
 }
+void SEQ_STARFIELD_00(void) {
+  starfield.init(config.starfield.fade_in_speed,
+                 config.starfield.timer_duration,
+                 config.starfield.fade_out_speed);
+  starfield.speed(config.starfield.phase_speed, config.starfield.hue_speed);
+}
+void SEQ_HELIX_00(void) { helix.init(); }
+void SEQ_ATOMS_00(void) { atoms.init(); }
 
 // Animation sequencer jumptable implementation
 void Animation::next() {
   static void (*jump_table[])() =  //
-      {&SEQ_FIREWORKS_00, &SEQ_SINUS_00, &SEQ_TWINKEL_WHITE_00,
+      {&SEQ_ATOMS_00,        &SEQ_HELIX_00, &SEQ_STARFIELD_00,
+       &SEQ_FIREWORKS_00,    &SEQ_SINUS_00, &SEQ_TWINKEL_WHITE_00,
        &SEQ_TWINKEL_MULTI_00};
   if (animation_sequence >= sizeof(jump_table) / sizeof(void *)) {
     animation_sequence = 0;

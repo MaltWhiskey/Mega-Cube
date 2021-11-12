@@ -25,6 +25,20 @@ struct Config {
     float fade_in_speed = 1.0f;
     float fade_out_speed = 2.0f;
   } twinkels;
+  struct {
+    float timer_duration = 20.0f;
+    float fade_in_speed = 3.0f;
+    float fade_out_speed = 5.0f;
+    float phase_speed = 0.3f;
+    uint16_t hue_speed = 30;
+  } starfield;
+  struct {
+    float timer_duration = 20.0f;
+    float fade_in_speed = 3.0f;
+    float fade_out_speed = 5.0f;
+    float phase_speed = 3.0f;
+    uint16_t hue_speed = 30;
+  } spin;
 };
 // All cpp files that include this link to a single config struct
 extern struct Config config;
