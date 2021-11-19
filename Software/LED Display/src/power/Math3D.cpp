@@ -103,16 +103,11 @@ bool Vector3::inside(const Vector3& l, const Vector3& h) const {
  * Quaternion CLASS
  *----------------------------------------------------------------------------*/
 Quaternion::Quaternion() : w(0.0f), v(Vector3(0.0, 0.0, 0.0)) {}
-// Make a quaternion from a scalar and a vector
-Quaternion::Quaternion(float w_, const Vector3& v_) {
-  w = w_;
-  v = v_;
-}
 Quaternion::Quaternion(const Quaternion& q) : w(q.w), v(q.v) {}
 // Make a unit quaternion from an axis as a vector and an angle
 // Theoretically the magnitude of v_ can be used to specify the rotation
 // Using an angle makes things more convenient
-Quaternion::Quaternion(const Vector3& v_, float a) {
+Quaternion::Quaternion(float a, const Vector3& v_) {
   // normalize v to get n hat (unit vector with length = 1)
   Vector3 n = v_.normalized();
   // Angle is in degree and is converted to radian by 2PI/360 * angle
@@ -204,10 +199,8 @@ Quaternion Quaternion::normalized() const { return *this / magnitude(); }
 float Quaternion::magnitude() const { return sqrt(norm()); }
 float Quaternion::norm() const { return w * w + v.dot(v); }
 
-// rotate v by this quaternion
-Vector3 Quaternion::rotate(const Vector3& v) const {
-  // creates a pure quaternion from a vector
-  Quaternion p = Quaternion(0, v);
-  // multiply (p)(q)(pi) and return vector part
-  return ((*this) * p * (*this).inversed()).v;
+// rotate v_ by this quaternion holding an angle and axis
+Vector3 Quaternion::rotate(const Vector3& v_) const {
+  Vector3 vcv_ = v.cross(v_);
+  return v_ + vcv_ * (2 * w) + v.cross(vcv_) * 2;
 }

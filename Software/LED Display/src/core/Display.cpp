@@ -95,33 +95,74 @@ bool Display::available() { return displayAvailable; }
 // Clear the cube so a new frame can be freshly created.
 void Display::clear() { memset(cube, 0, sizeof(cube)); }
 
-// Radiate between led's. Length = 0% light, 0 = 100% light. Linear interpolated
-void Display::radiate(const Vector3 &origin, const Color &color, float length) {
-  float fx = floor(origin.x);
-  float fy = floor(origin.y);
-  float fz = floor(origin.z);
-  float cx = ceil(origin.x);
-  float cy = ceil(origin.y);
-  float cz = ceil(origin.z);
+// Draw a line through the origin of the cube with direction of n
+// Used for debugging only, not optimized
+void Display::line(Vector3 n) {
+  // Origin in the cube is between leds
+  static Vector3 origin = Vector3(7.5f, 7.5f, 7.5f);
+  // Get the normal vector n hat.
+  n.normalize();
+  // Multiply by the radius of the sphere fitting the cube
+  n *= sqrt(3) * 7.5f;
+  // Get the amount of steps needed
+  float steps = max(abs(n.z), max(abs(n.x), abs(n.y)));
+  // Get the increment vector for each dimension
+  Vector3 inc = n / steps;
+  // The vector is pointing in the direction of RED
+  for (uint8_t i = 0; i <= steps; i++) {
+    Display::radiate(origin + (inc * i), Color::RED, 1.0f);
+    Display::radiate(origin - (inc * i), Color::BLUE, 1.0f);
+  }
+}
 
-  Vector3 pixel[] = {Vector3(fx, fy, fz), Vector3(cx, fy, fz),   // front down
-                     Vector3(fx, cy, fz), Vector3(cx, cy, fz),   // front up
-                     Vector3(fx, fy, cz), Vector3(cx, fy, cz),   // back down
-                     Vector3(fx, cy, cz), Vector3(cx, cy, cz)};  // back up
-
-  Vector3 box_l = Vector3(0, 0, 0);
-  Vector3 box_h = Vector3(width, height, depth);
-  for (int i = 0; i < 8; i++) {
-    Vector3 point = pixel[i];
-    if (point.inside(box_l, box_h)) {
-      float intensity = length - (origin - point).magnitude();
-      if (intensity > 0) {
-        Color c1 = cube[(uint8_t)point.x][(uint8_t)point.y][(uint8_t)point.z];
-        Color c2 = color.scaled(255 * intensity);
-        Color c = Color(c1.red > c2.red ? c1.red : c2.red,
-                        c1.green > c2.green ? c1.green : c2.green,
-                        c1.blue > c2.blue ? c1.blue : c2.blue);
-        cube[(uint8_t)point.x][(uint8_t)point.y][(uint8_t)point.z] = c;
+// Radiate between led's linear interpolated.
+// Distance Length = 0% light
+// Distance 0 = 100% light.
+// Use gamma to aproximate inverse square law
+void Display::radiate(const Vector3 &origin, const Color &color, float length,
+                      boolean gamma) {
+  static uint8_t x1, x2, y1, y2, z1, z2;
+  Vector3 box = Vector3(length, length, length);
+  Vector3 min = origin - box;
+  Vector3 max = origin + box;
+  if (min.x < 0)
+    x1 = 0;
+  else if (max.x > Display::width)
+    x2 = Display::width;
+  else {
+    x1 = roundf(min.x);
+    x2 = roundf(max.x);
+  }
+  if (min.y < 0)
+    y1 = 0;
+  else if (max.y > Display::height)
+    y2 = Display::height;
+  else {
+    y1 = roundf(min.y);
+    y2 = roundf(max.y);
+  }
+  if (min.z < 0)
+    z1 = 0;
+  else if (max.z > Display::depth)
+    z2 = Display::depth;
+  else {
+    z1 = roundf(min.z);
+    z2 = roundf(max.z);
+  }
+  for (uint8_t x = x1; x < x2; x++) {
+    for (uint8_t y = y1; y < y2; y++) {
+      for (uint8_t z = z1; z < z2; z++) {
+        float radius = (origin - Vector3(x, y, z)).magnitude();
+        if (radius < length) {
+          Color c1 = cube[x][y][z];
+          Color c2 = color.scaled((1 - (radius / length)) * 255);
+          if (gamma) {
+            c2 = Color(gamma8[c2.r], gamma8[c2.g], gamma8[c2.b]);
+          }
+          cube[x][y][z] = Color(c1.red > c2.red ? c1.red : c2.red,
+                                c1.green > c2.green ? c1.green : c2.green,
+                                c1.blue > c2.blue ? c1.blue : c2.blue);
+        }
       }
     }
   }
@@ -136,8 +177,8 @@ void Display::radiate(const Vector3 &origin, const Color &color, float length) {
  * 24 * (DIV_SELECT + NUM/DENOM) -> 24 * (29 + 17/27) = 711.1111111 MHz
  ***************************************************************************/
 void Display::setupPLL() {
-  // Before disabeling the PLL set the bypass source to the internal 24MHz
-  // reference clock. See 14.6.1.6 page 1039.
+  // Before disabeling the PLL set the bypass source to the internal
+  // 24MHz reference clock. See 14.6.1.6 page 1039.
   CCM_ANALOG_PLL_VIDEO_CLR = CCM_ANALOG_PLL_VIDEO_BYPASS_CLK_SRC(3) |
                              // Clear power down bit to power up the PLL
                              CCM_ANALOG_PLL_VIDEO_POWERDOWN;
@@ -161,7 +202,8 @@ void Display::setupPLL() {
 #endif
   // Clear dividers before setting the values
   CCM_ANALOG_MISC2_CLR = CCM_ANALOG_MISC2_VIDEO_DIV(3);
-  // Post-divider for video values (0=/1, 1=/2, 2=/1, 3=/4) (2 is also /1)
+  // Post-divider for video values (0=/1, 1=/2, 2=/1, 3=/4) (2 is also
+  // /1)
   CCM_ANALOG_MISC2_SET = CCM_ANALOG_MISC2_VIDEO_DIV(0);
 
   CCM_ANALOG_PLL_VIDEO_SET =
@@ -290,8 +332,8 @@ void Display::setupFIO() {
       FLEXIO_TIMCFG_TIMENA(1);
 
   // Timer control 50.5.1.20 page 2932
-  // Triggered after loading SHIFTER0 from SHIFTBUF0 50.5.1.16.3 page 2929
-  // TIMER0 is configured to output on BCK = pin 10
+  // Triggered after loading SHIFTER0 from SHIFTBUF0 50.5.1.16.3 page
+  // 2929 TIMER0 is configured to output on BCK = pin 10
   IMXRT_FLEXIO2_S.TIMCTL[0] =
       // Trigger select -> triggers on SHIFTER[N=0] status flag (4*N+1)
       FLEXIO_TIMCTL_TRGSEL(1) |
@@ -321,19 +363,21 @@ void Display::setupFIO() {
 
   // Timer compare 50.5.1.22 page 2937
   // The upper 8 bits configure the number of bits = (cmp[15:8] + 1) / 2
-  // Upper 8 bits -> 4 x 32 bits -> 128 * 2 -> 256 - 1 = 0xFF voor 128 bits
-  // The lower 8 bits configure baud rate divider = (cmp[ 7:0] + 1) * 2
-  // Lower 8 bits -> (0 + 1) * 2 -> divide frequency by 2
+  // Upper 8 bits -> 4 x 32 bits -> 128 * 2 -> 256 - 1 = 0xFF voor 128
+  // bits The lower 8 bits configure baud rate divider = (cmp[ 7:0] + 1)
+  // * 2 Lower 8 bits -> (0 + 1) * 2 -> divide frequency by 2
   IMXRT_FLEXIO2_S.TIMCMP[0] = 0x0000FF00;
   // Timer compare 50.3.3.3 page 2891
   // Configure baud rate of the shift clock (cmp[15:0] + 1) * 2
   // -> (31 + 1) * 2 -> divide frequency by 64
-  // When the counter equals zero and decrements the timer output toggles
-  // Pulses generated -> 32 pulses of TIMER0 and 1 pulse of TIMER1
+  // When the counter equals zero and decrements the timer output
+  // toggles Pulses generated -> 32 pulses of TIMER0 and 1 pulse of
+  // TIMER1
   IMXRT_FLEXIO2_S.TIMCMP[1] = 0x0000001F;
 
   // Shiftbuffers 1 & 2 get filled by DMA later. Start with all zero's
-  // to reset/latch the led's. See 50.5.1.6.3 page 2918 for DMA triggering.
+  // to reset/latch the led's. See 50.5.1.6.3 page 2918 for DMA
+  // triggering.
   IMXRT_FLEXIO2_S.SHIFTBUFBIS[0] = 0x00000000;
   IMXRT_FLEXIO2_S.SHIFTBUFBIS[1] = 0x00000000;
   IMXRT_FLEXIO2_S.SHIFTBUFBIS[2] = 0x00000000;
@@ -351,11 +395,12 @@ void Display::setupDMA() {
                              sizeof(dmaBufferData[0]));
   dmaSetting[0].destination(IMXRT_FLEXIO2_S.SHIFTBUFBIS[1]);
   dmaSetting[0].replaceSettingsOnCompletion(dmaSetting[1]);
-  // Synchronize buffer swapping with dma transfer to avoid display artifacts
+  // Synchronize buffer swapping with dma transfer to avoid display
+  // artifacts
   dmaSetting[0].interruptAtCompletion();
   // TCD 1 sets SHIFTBUF[0] Low. The DMA channel is triggered by FlexIO
-  // shifter 1. A write to SHIFTBUF[0] doesn't clear this trigger. The DMA
-  // channel is triggered again upon completion of TCD1
+  // shifter 1. A write to SHIFTBUF[0] doesn't clear this trigger. The
+  // DMA channel is triggered again upon completion of TCD1
   dmaSetting[1].sourceBuffer(dmaBufferLow, 4);
   dmaSetting[1].destination(IMXRT_FLEXIO2_S.SHIFTBUFBIS[0]);
   dmaSetting[1].replaceSettingsOnCompletion(dmaSetting[2]);
@@ -386,13 +431,14 @@ void Display::setupDMA() {
   dmaChannel[0] = dmaSetting[2];
   dmaChannel[1] = dmaSetting[5];
   dmaChannel[0].triggerAtHardwareEvent(DMAMUX_SOURCE_FLEXIO2_REQUEST1);
-  // Attach interrupt to dma channel 0. The interrupt is enabled in update
-  // and disabled again in the ISR.
+  // Attach interrupt to dma channel 0. The interrupt is enabled in
+  // update and disabled again in the ISR.
   dmaChannel[0].attachInterrupt(&displayReady);
   // Bit pattern for PL9823 leds: High, Data, Data, Low
   // Bit pattern for WS2812 leds: High, Data, Low, Low
 #if defined PL9823
-  // Quick Fix: Don't trigger DMA for WS2812, this keeps 2nd data pulse low
+  // Quick Fix: Don't trigger DMA for WS2812, this keeps 2nd data pulse
+  // low
   dmaChannel[1].triggerAtHardwareEvent(DMAMUX_SOURCE_FLEXIO2_REQUEST3);
 #endif
   dmaChannel[0].enable();

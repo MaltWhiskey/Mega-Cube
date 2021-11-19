@@ -82,7 +82,6 @@ class Quaternion {
   Quaternion();
   Quaternion(const Quaternion& q);
   Quaternion(float w, const Vector3& v);
-  Quaternion(const Vector3& v, float a);
 
   // moving (add subtract)
   Quaternion operator+(const Quaternion& q) const;

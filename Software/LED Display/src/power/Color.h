@@ -5,13 +5,15 @@
  * Globals
  *-------------------------------------------------------------------------------------*/
 extern uint8_t RainbowGradientPalette[];
+extern uint8_t SunsetRealPalette[];
+extern uint8_t LavaPalette[];
 /*---------------------------------------------------------------------------------------
  * Color CLASS
  *---------------------------------------------------------------------------------------
  * Color had a red, blue and green value
  *
- * Different contructors are available to get the desired color. Colors can be
- * generated from a pallete, predefined values or randomly generated.
+ * Different contructors are available to get the desired color. Colors can
+ *be generated from a pallete, predefined values or randomly generated.
  *-------------------------------------------------------------------------------------*/
 class Color {
  public:

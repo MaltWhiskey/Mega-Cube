@@ -6,6 +6,61 @@
 
 class Atoms : public Animation {
  private:
+  float angle;
+  float angular_speed;
+  uint16_t hue_speed;
+
+  Timer timer_duration;
+  Timer timer_interval;
+  float time_expansion = 2.0f;
+  float time_contraction = 5.0f;
+
+  const static uint8_t ATOMS = 6;
+  Vector3 atoms[ATOMS] = {
+      Vector3(1, 0, 0),  Vector3(0, 1, 0),  Vector3(0, 0, 1),
+      Vector3(-1, 0, 0), Vector3(0, -1, 0), Vector3(0, 0, -1),
+  };
+
+ public:
+  void init() {
+    task = task_state_t::RUNNING;
+    timer_duration = 60.0f;
+
+    angle = 0;
+    angular_speed = 2.0f;
+    hue_speed = 30;
+  }
+
+  void draw(float dt) {
+    angle += angular_speed * dt;
+    hue16 += (int16_t)(255 * hue_speed * dt);
+
+    Vector3 axis =
+        Vector3(+sinf(angle), +sinf(angle * 1.17f), +sinf(angle * 1.33));
+
+    for (uint8_t i = 0; i < ATOMS; i++) {
+      Vector3 v = axis.rotate(100, atoms[i]);
+      v *= Vector3(5, 5, 5);
+      v += Vector3(7.5f, 7.5f, 7.5f);
+      Color c = Color((hue16 >> 8) + (i * 8), RainbowGradientPalette);
+      Display::radiate(v, c, 2.8f, true);
+    }
+    Display::line(axis);
+
+    if (timer_duration.update()) {
+      task = task_state_t::INACTIVE;
+    }
+  }
+};
+#endif
+#ifndef ATOMS_H
+#define ATOMS_H
+
+#include "Animation.h"
+#include "Power/Math8.h"
+
+class Atoms : public Animation {
+ private:
   float angle1;
   float angular_speed1;
   float angle2;
@@ -62,8 +117,8 @@ class Atoms : public Animation {
       Vector3 v = axes[i].rotate(angle2, atoms[i]);
       v *= Vector3(5, 5, 5);
       v += Vector3(8, 8, 8);
-      Color c = Color((hue16 >> 8) + (i * (255 / 6)), RainbowGradientPalette);
-      Display::radiate(v, c, 1.0f);
+      Color c = Color((hue16 >> 8) + (i * 8), RainbowGradientPalette);
+      Display::radiate(v, c, 2.8f, true);
     }
     if (timer_duration.update()) {
       task = task_state_t::INACTIVE;

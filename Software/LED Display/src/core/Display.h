@@ -16,10 +16,10 @@ class Display {
   static const uint8_t height = 16;
   static const uint8_t depth = 16;
   static Color cube[width][height][depth];
-
- private:
   // Gamma correction table
   static const uint8_t gamma8[256];
+
+ private:
   // Amount of bits per led (keep at 24 for RGB)
   static const uint8_t BITCOUNT = 24;
   // Amount of leds per channel
@@ -64,6 +64,9 @@ class Display {
   // Clear the cube so a new frame can be created fresh
   static void clear();
   // Radiate light from a pixel in the cube
-  static void radiate(const Vector3 &, const Color &, float distance);
+  static void radiate(const Vector3 &, const Color &, float length,
+                      boolean gamma = false);
+  // Draw a line though this cube
+  static void line(Vector3);
 };
 #endif

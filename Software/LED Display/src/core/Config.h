@@ -39,6 +39,21 @@ struct Config {
     float phase_speed = 3.0f;
     uint16_t hue_speed = 30;
   } spin;
+  struct {
+    float timer_duration = 60.0f;
+    uint8_t brightness = 70;
+    // scale_p represents the distance between each pixel in the noise map
+    float scale_p = 0.15f;
+    // speed is how fast the movement is over the axis in the noise map
+    float speed_x = 0.1f;
+    float speed_y = 0.2f;
+    float speed_z = 0.3f;
+    float speed_w = 0.4f;
+    // speed_offset_speed is the travel distance through a 1d noise map
+    float speed_offset_speed = 0.02f;
+    // The speed for changing the hue values
+    uint16_t hue_speed = 30;
+  } noise;
 };
 // All cpp files that include this link to a single config struct
 extern struct Config config;

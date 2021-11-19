@@ -36,4 +36,7 @@ static inline uint8_t qsub8(uint8_t a, uint8_t b) {
   if (b > a) return 0;
   return a - b;
 }
+static inline uint8_t scale8(uint8_t i, uint8_t scale) {
+  return (((uint16_t)i) * (1 + (uint16_t)(scale))) >> 8;
+}
 #endif

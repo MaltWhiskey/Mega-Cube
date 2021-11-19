@@ -43,10 +43,9 @@ class Helix : public Animation {
         zf = mapf(zf, -1.1f, 0.9f, 0, Display::height - 1);
         Color c1 = Color((hue16 >> 8) + y * 3, RainbowGradientPalette);
         Color c2 = Color((hue16 >> 8) + y * 3 + 128, RainbowGradientPalette);
-        Vector3 v1 = Vector3(xf, y, zf);
-        Vector3 v2 = Vector3(Display::width - xf, y, Display::depth - zf);
-        Display::radiate(v1, c1, 1.0f);
-        Display::radiate(v2, c2, 1.0f);
+        Display::cube[(uint8_t)xf][y][(uint8_t)zf] = c1;
+        Display::cube[(uint8_t)(Display::width - xf)][y]
+                     [(uint8_t)(Display::depth - zf)] = c2;
       }
     }
 

@@ -70,11 +70,11 @@ class Starfield : public Animation {
     }
 
     for (int i = 0; i < numStars; i++) {
-      float sx = (stars[i].x - (Display::width / 2)) / 1.5f;
-      float sy = (stars[i].y - (Display::height / 2)) / 1.5f;
-      float sz = (stars[i].z) / 1.5f;
+      float sx = (stars[i].x - (Display::width / 2)) / 1.25f;
+      float sy = (stars[i].y - (Display::height / 2)) / 1.25f;
+      float sz = (stars[i].z) / 1.0f;
       float h = 0.8f + sqrt(sx * sx + sy * sy + sz * sz);
-      stars[i].z += sinf(phase) * dt * h * 15;
+      stars[i].z += sinf(phase) * dt * h * 5;
       if (stars[i].z >= Display::depth) {
         stars[i].x = random(0, Display::width);
         stars[i].y = random(0, Display::height);
