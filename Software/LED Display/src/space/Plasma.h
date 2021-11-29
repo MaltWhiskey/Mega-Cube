@@ -70,7 +70,7 @@ class Plasma : public Animation {
           uint8_t value = noise_map[y][x][z];
           value = Display::gamma8[value];
           Display::cube[x][y][z] =
-              Color((hue16 >> 8) + index, LavaPalette).scale(value);
+              Color((hue16 >> 8) + index, LavaPalette).scale(value).scale(200);
         }
       }
     }

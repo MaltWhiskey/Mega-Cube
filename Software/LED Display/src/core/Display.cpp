@@ -125,47 +125,28 @@ void Display::radiate(const Vector3 &origin, const Color &color, float length,
   Vector3 box = Vector3(length, length, length);
   Vector3 min = origin - box;
   Vector3 max = origin + box;
-  if (min.x < 0)
-    x1 = 0;
-  else if (max.x > Display::width)
-    x2 = Display::width;
-  else {
-    x1 = roundf(min.x);
-    x2 = roundf(max.x);
-  }
-  if (min.y < 0)
-    y1 = 0;
-  else if (max.y > Display::height)
-    y2 = Display::height;
-  else {
-    y1 = roundf(min.y);
-    y2 = roundf(max.y);
-  }
-  if (min.z < 0)
-    z1 = 0;
-  else if (max.z > Display::depth)
-    z2 = Display::depth;
-  else {
-    z1 = roundf(min.z);
-    z2 = roundf(max.z);
-  }
-  for (uint8_t x = x1; x < x2; x++) {
-    for (uint8_t y = y1; y < y2; y++) {
-      for (uint8_t z = z1; z < z2; z++) {
-        float radius = (origin - Vector3(x, y, z)).magnitude();
+
+  // Keep within visible limits
+  x1 = min.x < 0 ? 0 : roundf(min.x);
+  y1 = min.y < 0 ? 0 : roundf(min.y);
+  z1 = min.z < 0 ? 0 : roundf(min.z);
+  x2 = max.x < Display::width - 1 ? roundf(max.x) : Display::width - 1;
+  y2 = max.y < Display::height - 1 ? roundf(max.y) : Display::height - 1;
+  z2 = max.z < Display::depth - 1 ? roundf(max.z) : Display::depth - 1;
+
+  for (uint8_t x = x1; x <= x2; x++)
+    for (uint8_t y = y1; y <= y2; y++)
+      for (uint8_t z = z1; z <= z2; z++) {
+        float radius = (Vector3(x, y, z) - origin).magnitude();
         if (radius < length) {
           Color c1 = cube[x][y][z];
           Color c2 = color.scaled((1 - (radius / length)) * 255);
-          if (gamma) {
-            c2 = Color(gamma8[c2.r], gamma8[c2.g], gamma8[c2.b]);
-          }
+          if (gamma) c2 = Color(gamma8[c2.r], gamma8[c2.g], gamma8[c2.b]);
           cube[x][y][z] = Color(c1.red > c2.red ? c1.red : c2.red,
                                 c1.green > c2.green ? c1.green : c2.green,
                                 c1.blue > c2.blue ? c1.blue : c2.blue);
         }
       }
-    }
-  }
 }
 
 /****************************************************************************

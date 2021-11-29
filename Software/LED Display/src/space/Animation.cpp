@@ -4,6 +4,7 @@
 #include "Atoms.h"
 #include "Fireworks.h"
 #include "Helix.h"
+#include "Mario.h"
 #include "Plasma.h"
 #include "Sinus.h"
 #include "Starfield.h"
@@ -26,9 +27,10 @@ Helix helix;
 Atoms atoms;
 Arrows arrows;
 Plasma plasma;
-Animation *Animations[] = {&atoms,      &sinus,      &starfield,
-                           &fireworks1, &fireworks2, &twinkels,
-                           &helix,      &arrows,     &plasma};
+Mario mario;
+Animation *Animations[] = {&atoms,      &sinus,    &starfield, &fireworks1,
+                           &fireworks2, &twinkels, &helix,     &arrows,
+                           &plasma,     &mario};
 const uint8_t ANIMATIONS = sizeof(Animations) / sizeof(Animation *);
 /*----------------------------------------------------------------------------*/
 // Start display asap to minimize PL9823 blue startup
@@ -108,13 +110,15 @@ void SEQ_HELIX_00(void) { helix.init(); }
 void SEQ_ATOMS_00(void) { atoms.init(); }
 void SEQ_ARROWS_00(void) { arrows.init(); }
 void SEQ_PLASMA_00(void) { plasma.init(); }
+void SEQ_MARIO_00(void) { mario.init(); }
 
 // Animation sequencer jumptable implementation
 void Animation::next() {
   static void (*jump_table[])() =  //
-      {&SEQ_PLASMA_00, &SEQ_ARROWS_00,        &SEQ_ATOMS_00,
-       &SEQ_HELIX_00,  &SEQ_STARFIELD_00,     &SEQ_FIREWORKS_00,
-       &SEQ_SINUS_00,  &SEQ_TWINKEL_WHITE_00, &SEQ_TWINKEL_MULTI_00};
+      {&SEQ_MARIO_00,        &SEQ_PLASMA_00, &SEQ_ARROWS_00,
+       &SEQ_ATOMS_00,        &SEQ_HELIX_00,  &SEQ_STARFIELD_00,
+       &SEQ_FIREWORKS_00,    &SEQ_SINUS_00,  &SEQ_TWINKEL_WHITE_00,
+       &SEQ_TWINKEL_MULTI_00};
   if (animation_sequence >= sizeof(jump_table) / sizeof(void *)) {
     animation_sequence = 0;
   }
