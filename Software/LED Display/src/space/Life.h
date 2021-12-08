@@ -21,7 +21,7 @@ class Life : public Animation {
  public:
   void init() {
     task = task_state_t::RUNNING;
-    timer_duration = 460.0f;
+    timer_duration = 30.0f;
     randomize();
   }
 
