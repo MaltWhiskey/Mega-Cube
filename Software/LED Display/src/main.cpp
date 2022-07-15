@@ -43,7 +43,7 @@ void loop() {
 
   Animation::animate();
   ESP8266::loop();
-  // loop_lcd();
+  loop_lcd();
 
   if (print_interval.update()) {
     static char fps[20];

@@ -51,8 +51,8 @@ ILI9341_T4::ILI9341Driver tft(PIN_CS, PIN_DC, PIN_SCK, PIN_MOSI, PIN_MISO,
                               PIN_RESET, PIN_TOUCH_CS, PIN_TOUCH_IRQ);
 
 // 2 diff buffers with 8K memory each
-ILI9341_T4::DiffBuffStatic<1024> diff1;
-ILI9341_T4::DiffBuffStatic<1024> diff2;
+ILI9341_T4::DiffBuffStatic<8192> diff1;
+ILI9341_T4::DiffBuffStatic<8192> diff2;
 
 // Screen size in landscape mode
 #define LX 320
@@ -63,8 +63,8 @@ ILI9341_T4::DiffBuffStatic<1024> diff2;
 
 // the framebuffers
 DMAMEM uint16_t
-    internal_fb[LX * LY];  // used by the library for buffering (in DMAMEM)
-PROGMEM uint16_t fb[LX * LY];      // the main framebuffer we draw onto.
+    internal_fb[LX * LY];     // used by the library for buffering (in DMAMEM)
+DMAMEM uint16_t fb[LX * LY];  // the main framebuffer we draw onto.
 
 // colors
 #define BLACK 0
