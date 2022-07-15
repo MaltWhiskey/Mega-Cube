@@ -15,7 +15,7 @@ class Accelerometer : public Animation {
   }
 
   void draw(float dt) {
-    setMotionBlur(0);
+    setMotionBlur(config.animation.accelerometer.motionBlur);
     if (timer_duration.update()) {
       state = state_t::INACTIVE;
     }

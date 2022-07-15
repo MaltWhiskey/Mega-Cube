@@ -159,7 +159,8 @@ void SPECTRUM(boolean endless) {
 void SCROLLER(boolean endless) {
   auto &_ = config.animation.scroller;
   scroller.init(endless ? 0 : _.timer_duration, _.rotation_speed,
-                "MALT WHISKEY :'<=>?@*+!,./\xff\0");
+                "#MALT WHISKEY$\xff");
+  // " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\xff");
 }
 void ACCELEROMETER(boolean endless) {
   auto &_ = config.animation.accelerometer;
@@ -169,9 +170,9 @@ void ACCELEROMETER(boolean endless) {
 // Animation sequencer (jumptable)
 void Animation::next(boolean endless, uint8_t index) {
   static void (*jump_table[])(boolean endless) =  //
-      {&ACCELEROMETER, &SCROLLER,  &SPECTRUM, &PONG,          &LIFE,
-       &FIREWORKS,     &STARFIELD, &HELIX,    &SINUS,         &ATOMS,
-       &ARROWS,        &MARIO,     &PLASMA,   &TWINKEL_WHITE, &TWINKEL_MULTI};
+      {&SCROLLER,  &SPECTRUM, &PONG,          &LIFE,         &FIREWORKS,
+       &STARFIELD, &HELIX,    &SINUS,         &ATOMS,        &ARROWS,
+       &MARIO,     &PLASMA,   &TWINKEL_WHITE, &TWINKEL_MULTI};
   if (endless && (index < sizeof(jump_table) / sizeof(void *))) {
     jump_table[index](true);
   } else {

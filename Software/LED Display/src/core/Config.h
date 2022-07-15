@@ -121,12 +121,12 @@ struct Config {
     } spectrum;
     struct {
       float timer_duration = 20.0f;
-      float rotation_speed = 45.0f;
+      float rotation_speed = 90.0f;
       uint8_t motionBlur = 220;
     } scroller;
     struct {
       float timer_duration = 20.0f;
-      uint8_t motionBlur = 0;
+      uint8_t motionBlur = 220;
     } accelerometer;
   } animation;
   struct {

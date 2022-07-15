@@ -1,6 +1,5 @@
-#include <stdint.h>
 #pragma once
-
+#include <stdint.h>
 class Sampler {
  private:
   int sample_rate;
