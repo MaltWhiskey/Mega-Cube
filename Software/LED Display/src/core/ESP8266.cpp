@@ -60,41 +60,30 @@ void execute(const char* char_buffer) {
   String event = doc["event"];
   // Serial.printf("Executing: %s\n", event.c_str());
   // Serial.println(char_buffer);
-  if (event.equals("move")) {
-    config.hid.stick.x = doc["x"];
-    config.hid.stick.y = doc["y"];
-    if (doc["press"] != NULL) {
-      config.hid.stick.press = doc["press"];
-      config.hid.stick.changed = true;
-    }
-    if (doc["a"] != NULL) {
-      config.hid.shoulder.a = doc["a"];
-      config.hid.shoulder.changed = true;
-    }
-    if (doc["b"] != NULL) {
-      config.hid.shoulder.b = doc["b"];
-      config.hid.shoulder.changed = true;
-    }
-    if (doc["c"] != NULL) {
-      config.hid.shoulder.c = doc["c"];
-      config.hid.shoulder.changed = true;
-    }
+  if (event.equals("button")) {
+    config.hid.button.x = doc["x"];
+    config.hid.button.y = doc["y"];
+    config.hid.button.z = doc["z"];
+    config.hid.button.a = doc["a"];
+    config.hid.button.b = doc["b"];
+    config.hid.button.c = doc["c"];
+    config.hid.button.updated = micros();
   } else if (event.equals("fft")) {
     String msg = doc["data"];
     for (uint16_t i = 0; i < msg.length(); i++) {
       char c = msg.charAt(i) - 'A';
       config.hid.fft.data[i] = (uint8_t)c;
-      config.hid.fft.update = true;
+      config.hid.fft.updated = micros();
     }
   } else if (event.equals("time")) {
     Serial.println(char_buffer);
     uint32_t epoc = doc["epoc"];
     setTime(epoc);
-  } else if (event.equals("gyro")) {
-    // Serial.println(char_buffer);
+  } else if (event.equals("accelerometer")) {
     config.hid.accelerometer.x = doc["x"];
     config.hid.accelerometer.y = doc["y"];
     config.hid.accelerometer.z = doc["z"];
+    config.hid.accelerometer.updated = micros();
   }
 }
 

@@ -67,7 +67,7 @@ void Animation::animate() {
       // Animation can become inactive after drawing so check again
       if (animation.state != state_t::INACTIVE) {
         active_animation_count++;
-        if (config.hid.stick.press) animation.end();
+        if (config.hid.button.z) animation.end();
       }
     }
     // Select the next or specific animation from the sequence list

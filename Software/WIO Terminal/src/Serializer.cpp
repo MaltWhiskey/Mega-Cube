@@ -37,7 +37,7 @@ void Serializer::update(int* fft) {
   m_tcp->rpc(buffer);
   doc.clear();
 
-  doc["event"] = "move";
+  doc["event"] = "button";
   if (digitalRead(WIO_5S_LEFT) == LOW) {
     doc["x"] = (int)-1;
   } else if (digitalRead(WIO_5S_RIGHT) == LOW) {
@@ -52,33 +52,18 @@ void Serializer::update(int* fft) {
   } else {
     doc["y"] = (int)0;
   }
-  if (btn_stick != (digitalRead(WIO_5S_PRESS) == LOW)) {
-    btn_stick = !btn_stick;
-    doc["press"] = btn_stick;
-  }
-  if (btn_a != (digitalRead(WIO_KEY_A) == LOW)) {
-    btn_a = !btn_a;
-    doc["a"] = btn_a;
-  }
-  if (btn_b != (digitalRead(WIO_KEY_B) == LOW)) {
-    btn_b = !btn_b;
-    doc["b"] = btn_b;
-  }
-  if (btn_c != (digitalRead(WIO_KEY_C) == LOW)) {
-    btn_c = !btn_c;
-    doc["c"] = btn_c;
-  }
+  doc["z"] = (digitalRead(WIO_5S_PRESS) == LOW);
+  doc["a"] = (digitalRead(WIO_KEY_A) == LOW);
+  doc["b"] = (digitalRead(WIO_KEY_B) == LOW);
+  doc["c"] = (digitalRead(WIO_KEY_C) == LOW);
   serializeJson(doc, buffer);
   m_tcp->rpc(buffer);
   doc.clear();
 
-  doc["event"] = "gyro";
-  float x = lis.getAccelerationX();
-  float y = lis.getAccelerationY();
-  float z = lis.getAccelerationZ();
-  doc["x"] = x;
-  doc["y"] = y;
-  doc["z"] = z;
+  doc["event"] = "accelerometer";
+  doc["x"] = (float)lis.getAccelerationX();
+  doc["y"] = (float)lis.getAccelerationY();
+  doc["z"] = (float)lis.getAccelerationZ();
   serializeJson(doc, buffer);
   m_tcp->rpc(buffer);
   doc.clear();

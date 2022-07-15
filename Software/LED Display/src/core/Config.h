@@ -28,11 +28,11 @@ struct Config {
     boolean endless = false;
     uint8_t animation = 0;
     struct {
-      float timer_duration = 20.0f;
+      float timer_duration = 30.0f;
       uint8_t motionBlur = 230;
     } fireworks;
     struct {
-      float timer_duration = 20.0f;
+      float timer_duration = 30.0f;
       float fade_in_speed = 5.0f;
       float fade_out_speed = 10.0f;
       float phase_speed = PI;
@@ -41,21 +41,21 @@ struct Config {
       uint8_t motionBlur = 0;
     } sinus;
     struct {
-      float timer_duration = 20.0f;
+      float timer_duration = 30.0f;
       float timer_interval = 0.2f;
       float phase_speed = 5;
       float hue_speed = 30;
       uint8_t motionBlur = 230;
     } helix;
     struct {
-      float timer_duration = 20.0f;
+      float timer_duration = 30.0f;
       float timer_interval = 0.1f;
       float fade_in_speed = 1.0f;
       float fade_out_speed = 2.0f;
       uint8_t motionBlur = 0;
     } twinkels;
     struct {
-      float timer_duration = 20.0f;
+      float timer_duration = 30.0f;
       float fade_in_speed = 3.0f;
       float fade_out_speed = 5.0f;
       float phase_speed = 0.3f;
@@ -63,7 +63,7 @@ struct Config {
       uint8_t motionBlur = 230;
     } starfield;
     struct {
-      float timer_duration = 20.0f;
+      float timer_duration = 30.0f;
       float fade_in_speed = 5.0f;
       float fade_out_speed = 10.0f;
       float scale_p = 0.15f;
@@ -77,7 +77,7 @@ struct Config {
       uint8_t brightness = 70;
     } plasma;
     struct {
-      float timer_duration = 20.0f;
+      float timer_duration = 30.0f;
       float timer_interval = 0.15f;
       float angular_speed = -70.0f;
       float time_expansion = 3.0f;
@@ -86,7 +86,7 @@ struct Config {
       uint8_t motionBlur = 220;
     } mario;
     struct {
-      float timer_duration = 20.0f;
+      float timer_duration = 30.0f;
       float time_expansion = 3.0f;
       float time_contraction = 5.0f;
       float angular_speed = -180.0f;
@@ -95,7 +95,7 @@ struct Config {
       uint8_t motionBlur = 220;
     } arrows;
     struct {
-      float timer_duration = 20.0f;
+      float timer_duration = 30.0f;
       float time_expansion = 3.0f;
       float time_contraction = 5.0f;
       float angular_speed = 120.0f;
@@ -104,28 +104,28 @@ struct Config {
       uint8_t motionBlur = 200;
     } atoms;
     struct {
-      float timer_duration = 60.0f;
+      float timer_duration = 30.0f;
       float time_fading = 2.0f;
       uint16_t hue_speed = 25;
       uint8_t motionBlur = 0;
     } pong;
     struct {
-      float timer_duration = 20.0f;
+      float timer_duration = 30.0f;
       float time_fading = 0.20f;
       uint8_t motionBlur = 0;
     } life;
     struct {
-      float timer_duration = 20.0f;
+      float timer_duration = 30.0f;
       uint16_t hue_speed = 25;
       uint8_t motionBlur = 220;
     } spectrum;
     struct {
-      float timer_duration = 20.0f;
+      float timer_duration = 30.0f;
       float rotation_speed = 90.0f;
       uint8_t motionBlur = 220;
     } scroller;
     struct {
-      float timer_duration = 20.0f;
+      float timer_duration = 30.0f;
       uint8_t motionBlur = 220;
     } accelerometer;
   } animation;
@@ -133,23 +133,21 @@ struct Config {
     struct {
       int8_t x = 0;
       int8_t y = 0;
-      int8_t press = 0;
-      boolean changed = false;
-    } stick;
+      boolean z = false;
+      boolean a = false;
+      boolean b = false;
+      boolean c = false;
+      long updated = 0;
+    } button;
     struct {
       float x = 0;
       float y = 0;
       float z = 0;
+      long updated = 0;
     } accelerometer;
     struct {
-      boolean a = false;
-      boolean b = false;
-      boolean c = false;
-      boolean changed = false;
-    } shoulder;
-    struct {
       uint8_t data[64];
-      boolean update = false;
+      long updated = 0;
     } fft;
   } hid;
 };

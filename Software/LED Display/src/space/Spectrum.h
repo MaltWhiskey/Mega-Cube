@@ -11,6 +11,8 @@ class Spectrum : public Animation {
   uint8_t rx, ry, rz;
   float time_phase = 0;
   float time_fading = 2.0f;
+  float fft_updated = 0;
+  float button_updated = 0;
 
  public:
   void rotate_voxel(Color c, uint8_t x, uint8_t y, uint8_t z) {
@@ -45,20 +47,20 @@ class Spectrum : public Animation {
   void draw(float dt) {
     setMotionBlur(config.animation.spectrum.motionBlur);
     hue16 += (int16_t)(255 * hue_speed * dt);
-    if (config.hid.shoulder.changed) {
-      if (config.hid.shoulder.a) rx = (rx + 1) & 3;
-      if (config.hid.shoulder.b) ry = (ry + 1) & 3;
-      if (config.hid.shoulder.c) rz = (rz + 1) & 3;
-      config.hid.shoulder.changed = false;
+    if (config.hid.button.updated != button_updated) {
+      button_updated = config.hid.button.updated;
+      if (config.hid.button.a) rx = (rx + 1) & 3;
+      if (config.hid.button.b) ry = (ry + 1) & 3;
+      if (config.hid.button.c) rz = (rz + 1) & 3;
     }
-    if (config.hid.fft.update) {
+    if (config.hid.fft.updated != fft_updated) {
+      fft_updated = config.hid.fft.updated;
       for (uint8_t i = 0; i < 64; i++) {
         uint8_t a = config.hid.fft.data[i] & 0x0F;
         if (a > amplitude[i]) {
           amplitude[i] = a;
         }
       }
-      config.hid.fft.update = false;
     }
 
     // Adjust bars and draw Spectrum

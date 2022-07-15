@@ -9,6 +9,8 @@
  * Globals
  *----------------------------------------------------------------------------*/
 Config config;
+extern void setup_lcd();
+extern void loop_lcd();
 /*------------------------------------------------------------------------------
  * Initialize setup parameters
  *----------------------------------------------------------------------------*/
@@ -23,13 +25,14 @@ void setup() {
   static char read_buffer[4096];
   Serial1.addMemoryForRead(read_buffer, sizeof(read_buffer));
   // Prevents TX buffer overflow and blocking the program
-  static char write_buffer[4096];
+  static char write_buffer[1024];
   Serial1.addMemoryForWrite(write_buffer, sizeof(write_buffer));
   // Safety delay in case of code crash
   delay(2000);
   // Request time from Internet, the UART or Internet might fail
   ESP8266::request_time();
   delay(3000);
+  setup_lcd();
 }
 /*------------------------------------------------------------------------------
  * Start the main loop
@@ -40,6 +43,7 @@ void loop() {
 
   Animation::animate();
   ESP8266::loop();
+  // loop_lcd();
 
   if (print_interval.update()) {
     static char fps[20];
