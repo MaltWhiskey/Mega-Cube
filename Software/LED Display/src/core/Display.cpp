@@ -11,26 +11,10 @@ uint32_t Display::dmaBufferHigh[1] = {0xFFFFFFFF};
 uint32_t Display::dmaBufferLow[50] = {};
 DMAChannel Display::dmaChannel[2];
 DMASetting Display::dmaSetting[6];
+uint8_t Display::motionBlur = 240;
+uint8_t Display::brightness = 255;
 Color Display::cube[width][height][depth];
-const uint8_t Display::gamma8[256] = {
-    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   1,   1,
-    1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   2,   2,   2,   2,
-    2,   2,   2,   2,   3,   3,   3,   3,   3,   3,   3,   4,   4,   4,   4,
-    4,   5,   5,   5,   5,   6,   6,   6,   6,   7,   7,   7,   7,   8,   8,
-    8,   9,   9,   9,   10,  10,  10,  11,  11,  11,  12,  12,  13,  13,  13,
-    14,  14,  15,  15,  16,  16,  17,  17,  18,  18,  19,  19,  20,  20,  21,
-    21,  22,  22,  23,  24,  24,  25,  25,  26,  27,  27,  28,  29,  29,  30,
-    31,  32,  32,  33,  34,  35,  35,  36,  37,  38,  39,  39,  40,  41,  42,
-    43,  44,  45,  46,  47,  48,  49,  50,  50,  51,  52,  54,  55,  56,  57,
-    58,  59,  60,  61,  62,  63,  64,  66,  67,  68,  69,  70,  72,  73,  74,
-    75,  77,  78,  79,  81,  82,  83,  85,  86,  87,  89,  90,  92,  93,  95,
-    96,  98,  99,  101, 102, 104, 105, 107, 109, 110, 112, 114, 115, 117, 119,
-    120, 122, 124, 126, 127, 129, 131, 133, 135, 137, 138, 140, 142, 144, 146,
-    148, 150, 152, 154, 156, 158, 160, 162, 164, 167, 169, 171, 173, 175, 177,
-    180, 182, 184, 186, 189, 191, 193, 196, 198, 200, 203, 205, 208, 210, 213,
-    215, 218, 220, 223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252,
-    255};
+Color Display::buff[width][height][depth];
 
 void Display::begin() {
   setupPLL();
@@ -76,7 +60,10 @@ void Display::update() {
           led = 0x7F - led;
           uint32_t *offset = prepBuffer + led * BITCOUNT;
           uint8_t chn = (x >> 1 & 0x0E) + (z << 1 & 0xF8) + (z >> 1 & 1);
-          uint32_t value = cube[x][y][z].bits();
+          uint32_t value = cube[x][y][z]
+                               .blend(motionBlur, buff[x][y][z])
+                               .scale(brightness)
+                               .bits();
           value = (value << (1 + chn)) | (value >> (31 - chn));
           uint32_t mask = 1 << chn;
           for (uint8_t i = 0; i < BITCOUNT; i++) {
@@ -93,62 +80,19 @@ void Display::update() {
 // Check if the display is available to accept new cube data
 bool Display::available() { return displayAvailable; }
 // Clear the cube so a new frame can be freshly created.
-void Display::clear() { memset(cube, 0, sizeof(cube)); }
-
-// Draw a line through the origin of the cube with direction of n
-// Used for debugging only, not optimized
-void Display::line(Vector3 n) {
-  // Origin in the cube is between leds
-  static Vector3 origin = Vector3(7.5f, 7.5f, 7.5f);
-  // Get the normal vector n hat.
-  n.normalize();
-  // Multiply by the radius of the sphere fitting the cube
-  n *= sqrt(3) * 7.5f;
-  // Get the amount of steps needed
-  float steps = max(abs(n.z), max(abs(n.x), abs(n.y)));
-  // Get the increment vector for each dimension
-  Vector3 inc = n / steps;
-  // The vector is pointing in the direction of RED
-  for (uint8_t i = 0; i <= steps; i++) {
-    Display::radiate(origin + (inc * i), Color::RED, 1.0f);
-    Display::radiate(origin - (inc * i), Color::BLUE, 1.0f);
-  }
+void Display::clear() {
+  // Quick hack to swap cube data to buffer data
+  memcpy(buff, cube, sizeof(cube));
+  memset(cube, 0, sizeof(cube));
 }
-
-// Radiate between led's linear interpolated.
-// Distance Length = 0% light
-// Distance 0 = 100% light.
-// Use gamma to aproximate inverse square law
-void Display::radiate(const Vector3 &origin, const Color &color, float length,
-                      boolean gamma) {
-  static uint8_t x1, x2, y1, y2, z1, z2;
-  Vector3 box = Vector3(length, length, length);
-  Vector3 min = origin - box;
-  Vector3 max = origin + box;
-
-  // Keep within visible limits
-  x1 = min.x < 0 ? 0 : roundf(min.x);
-  y1 = min.y < 0 ? 0 : roundf(min.y);
-  z1 = min.z < 0 ? 0 : roundf(min.z);
-  x2 = max.x < Display::width - 1 ? roundf(max.x) : Display::width - 1;
-  y2 = max.y < Display::height - 1 ? roundf(max.y) : Display::height - 1;
-  z2 = max.z < Display::depth - 1 ? roundf(max.z) : Display::depth - 1;
-
-  for (uint8_t x = x1; x <= x2; x++)
-    for (uint8_t y = y1; y <= y2; y++)
-      for (uint8_t z = z1; z <= z2; z++) {
-        float radius = (Vector3(x, y, z) - origin).magnitude();
-        if (radius < length) {
-          Color c1 = cube[x][y][z];
-          Color c2 = color.scaled((1 - (radius / length)) * 255);
-          if (gamma) c2 = Color(gamma8[c2.r], gamma8[c2.g], gamma8[c2.b]);
-          cube[x][y][z] = Color(c1.red > c2.red ? c1.red : c2.red,
-                                c1.green > c2.green ? c1.green : c2.green,
-                                c1.blue > c2.blue ? c1.blue : c2.blue);
-        }
-      }
+// Set the master display brightness value
+void Display::setBrightness(const uint8_t value) {  //
+  brightness = value;
 }
-
+// Set the motion blur value
+void Display::setMotionBlur(const uint8_t value) {  //
+  motionBlur = value;
+}
 /****************************************************************************
  * Set up PLL5 (also known as "VIDEO PLL")
  * This configures the Clock Controller Module (CCM)
@@ -205,7 +149,6 @@ void Display::setupPLL() {
   // Disable bypass for Video PLL once it's locked.
   CCM_ANALOG_PLL_VIDEO_CLR = CCM_ANALOG_PLL_VIDEO_BYPASS;
 }
-
 /*******************************************************************************
  * Configure flexio
  *
@@ -218,23 +161,27 @@ void Display::setupPLL() {
  *   ODE Open drain enable = 0 (0=disabled, 1=enabled)
  *   SPEED speed = 1
  *     (0=50MHz, 1=100MHz, 2=150MHz, 3=200MHz)
- *   DSE drive strength = 7 (should be impedance matched)
+ *     (Increases output driver current or reduce switching noise)
+ *   DSE drive strength = x (should be impedance matched)
  *     (0 = off, 1=150/1 Ohm, 2=150/2 Ohm, 3=150/3 Ohm, ... 7=150/7 Ohm)
+ *     (tr -> 5=1.70ns, 3=2.35ns, 2=3.13ns, 1=5.14ns @ SRE=0)
+ *     (tr -> 5=1.06ns, 3=1.74ns, 2=2.46ns, 1=4.77ns @ SRE=1)
+ *     (Transition rise and fall time are DSE & SRE dependent)
  *   SRE slew rate = 0 (0=slow, 1=fast)
  ******************************************************************************/
 void Display::setupFIO() {
   *portModeRegister(DIN) |= digitalPinToBitMask(DIN);
-  *portControlRegister(DIN) = IOMUXC_PAD_DSE(7) | IOMUXC_PAD_SPEED(1);
+  *portControlRegister(DIN) = IOMUXC_PAD_DSE(3) | IOMUXC_PAD_SPEED(1);
   // SION + ALT4 (FLEXIO2_FLEXIO16) (IOMUXC_SW_MUX_CTL_PAD_GPIO_B1_00)
   *portConfigRegister(DIN) = 0x14;
 
   *portModeRegister(WCK) |= digitalPinToBitMask(WCK);
-  *portControlRegister(WCK) = IOMUXC_PAD_DSE(7) | IOMUXC_PAD_SPEED(1);
+  *portControlRegister(WCK) = IOMUXC_PAD_DSE(3) | IOMUXC_PAD_SPEED(1);
   // SION + ALT4 (FLEXIO2_FLEXIO11) (IOMUXC_SW_MUX_CTL_PAD_GPIO_B0_11)
   *portConfigRegister(WCK) = 0x14;
 
   *portModeRegister(BCK) |= digitalPinToBitMask(BCK);
-  *portControlRegister(BCK) = IOMUXC_PAD_DSE(5) | IOMUXC_PAD_SPEED(1);
+  *portControlRegister(BCK) = IOMUXC_PAD_DSE(3) | IOMUXC_PAD_SPEED(1);
   // SION + ALT4 (FLEXIO2_FLEXIO00) (IOMUXC_SW_MUX_CTL_PAD_GPIO_B0_00)
   *portConfigRegister(BCK) = 0x14;
 

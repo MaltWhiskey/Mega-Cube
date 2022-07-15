@@ -2,70 +2,92 @@
 #define MARIO_H
 
 #include "Animation.h"
-#include "gfx/Mario16x16.h"
+#include "gfx/Mario.h"
 #include "power/Math8.h"
 
 class Mario : public Animation {
  private:
   float angle;
   float angular_speed;
-  uint16_t hue_speed;
+  float max_radius;
+  float start_radius = 3;
+  float start_angle = 0;
+  float radius;
+  float arc;
 
   Timer timer_duration;
-  Timer timer_interval = 0.15f;
+  Timer timer_interval;
+  float time_expansion;
+  float time_contraction;
+
   uint8_t frame = 0;
   uint8_t frame_display[6] = {0, 1, 2, 3, 2, 1};
 
  public:
-  void init() {
-    task = task_state_t::RUNNING;
-    timer_duration = 60.0f;
-
-    angle = 0;
-    angular_speed = -80.0f;
-    hue_speed = 10;
+  void init(float duration, float expansion, float contraction, float interval,
+            float anglespeed, float radius_) {
+    state = state_t::STARTING;
+    timer_duration = duration;
+    timer_interval = interval;
+    angular_speed = anglespeed;
+    max_radius = radius_;
+    time_expansion = expansion;
+    time_contraction = contraction;
+    angle = start_angle;
+    radius = start_radius;
   }
 
   void draw(float dt) {
+    setMotionBlur(config.animation.mario.motionBlur);
+    if (timer_duration.update()) {
+      state = state_t::ENDING;
+    }
+    if (state == state_t::STARTING) {
+      radius += dt * max_radius / time_expansion;
+      if (radius > max_radius) {
+        radius = max_radius;
+        state = state_t::RUNNING;
+      }
+    }
+    if (state == state_t::ENDING) {
+      radius -= dt * max_radius / time_contraction;
+      if (radius < start_radius) {
+        radius = start_radius;
+        state = state_t::INACTIVE;
+      }
+    }
+    if (timer_interval.update()) {
+      if (++frame >= sizeof(frame_display)) frame = 0;
+    }
+
+    uint8_t scale = 100;
+    float threshold = 0.4f;
+    float progress = (radius - start_radius) / max_radius;
+    if (progress < threshold) {
+      scale *= (progress * (1 / threshold));
+    }
+
     angle += angular_speed * dt;
-    hue16 += (int16_t)(255 * hue_speed * dt);
-    Quaternion axes[3] = {Quaternion(angle * 1.0f, Vector3(1, 0, 0)),
-                          Quaternion(angle * 0.9f, Vector3(0, 1, 0)),
-                          Quaternion(angle * 0.8f, Vector3(0, 0, 1))};
-    // Quaternion r = axes[1] * Quaternion(90, Vector3(0, 0, 1));
+    arc = 2 * (180 / M_PI) * asinf(0.5f / radius);
+
     for (uint8_t y = 0; y < 16; y++) {
       for (uint8_t x = 0; x < 16; x++) {
-        uint32_t data = mario16x16_data[frame_display[frame]][y * 16 + x];
+        uint32_t data = mario_data[frame_display[frame]][y * 16 + x];
         Color c = Color(0, 0, 0);
         if (data >> 24 & 0xff) {
           c = Color(data & 0xff, data >> 8 & 0xff, data >> 16 & 0xff);
           if (c.isBlack())
-            c = Color(0, 0, 30);
+            c = Color(0, 0, 0);
           else {
-            c.scale(200);
-            c = Color(Display::gamma8[c.r], Display::gamma8[c.g],
-                      Display::gamma8[c.b]);
+            c.gamma().scale(scale);
           }
         }
-        Vector3 v, p;
-        v = Vector3(x - 7.5f, 15 - y - 7.5f, 0 - 7.5f);
-        // p = axes[0].rotate(v) + Vector3(7.5f, 7.5f, 7.5f);
-        // Display::radiate(p, c, 1.8f, true);
-        p = axes[1].rotate(v) * 1.0f + Vector3(7.5f, 7.5f, 7.5f);
-        Display::radiate(p, c, 1.5f, false);
-        // p = axes[2].rotate(v) + Vector3(7.5f, 7.5f, 6.0f + 7.5f);
-        // Display::radiate(p, c, 1.8f, true);
-        // Display::cube[x][15 - y][hue16 >> 12] = c;
-        // Display::radiate(Vector3(x, 15 - y, (float)hue16 / 4096.0f), c, 1.0f,
-        //                 false);
+        // Map to coordinates with center (0,0,0) scaled by radius
+        // Project on a line at the left of the coordinate system
+        Vector3 point = Vector3(-radius, 7.5f - y, 0) / 7.5f * radius;
+        Quaternion q = Quaternion(angle - (arc * x), Vector3::Y);
+        radiate(q.rotate(point), c, 1.0f);
       }
-    }
-    // Display::line(axis.v);
-    if (timer_duration.update()) {
-      task = task_state_t::INACTIVE;
-    }
-    if (timer_interval.update()) {
-      if (++frame >= sizeof(frame_display)) frame = 0;
     }
   }
 };

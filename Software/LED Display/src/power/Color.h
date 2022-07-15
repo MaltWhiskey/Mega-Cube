@@ -42,6 +42,7 @@ class Color {
   static const Color CYAN;
   static const Color MAGENTA;
   static const Color BROWN;
+  static const uint8_t GAMMA[256];
 
  public:
   Color();
@@ -53,6 +54,10 @@ class Color {
 
   Color& scale(const uint8_t scalar);
   Color scaled(const uint8_t scalar) const;
+  Color& blend(const uint8_t scalar, const Color& target);
+  Color& maximize(const Color& c);
+
+  Color& gamma();
   uint32_t bits();
 
   Color& operator+=(const Color& c);

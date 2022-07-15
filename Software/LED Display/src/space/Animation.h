@@ -2,17 +2,24 @@
 #define ANIMATION_H
 #include <stdint.h>
 
-#include "Core/Config.h"
+#include "core/Config.h"
 #include "core/Display.h"
+#include "core/Graphics.h"
 #include "power/Math3D.h"
 #include "power/Math8.h"
 #include "power/Noise.h"
+#include "power/Particle.h"
 #include "power/Timer.h"
 /*------------------------------------------------------------------------------
  * ANIMATION INTERFACE
  *----------------------------------------------------------------------------*/
 // Task mode, mutually exclusive
-enum class task_state_t { INACTIVE = 0, STARTING = 1, RUNNING = 2, ENDING = 3 };
+enum class state_t : uint8_t {
+  INACTIVE = 0,
+  STARTING = 1,
+  RUNNING = 2,
+  ENDING = 3
+};
 
 class Animation {
  private:
@@ -21,13 +28,13 @@ class Animation {
   // Position in the sequence table
   static uint16_t animation_sequence;
 
- protected:
+ public:
   // Shared noise object
   static Noise noise;
   // Postition in color palette << 8 for more resolution
   uint16_t hue16 = 0;
   // Animation is active and drawn on the display
-  task_state_t task = task_state_t::INACTIVE;
+  state_t state = state_t::INACTIVE;
 
  public:
   virtual ~Animation(){};
@@ -35,15 +42,13 @@ class Animation {
   static void begin();
   // Animate all active animations
   static void animate();
-  // Schedule next animations from sequence
-  static void next();
-  // select animations from sequence
-  static void select();
+  // Select next animation from sequence or a specific one
+  static void next(boolean endless = false, uint8_t index = 0);
   // Get current fps
   static float fps();
   // Draws antimation frame respecting elapsed time
   virtual void draw(float dt) = 0;
-  // Gracefully terminate animation
-  void end();
+  // End animation gracefully
+  virtual void end();
 };
 #endif

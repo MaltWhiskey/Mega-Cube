@@ -1,0 +1,6 @@
+(sym_lib_table
+  (lib (name "MAX98357AETE")(type "KiCad")(uri "${KIPRJMOD}/Library/MAX98357AETE/MAX98357AETE.kicad_sym")(options "")(descr ""))
+  (lib (name "TPS54331DR")(type "KiCad")(uri "${KIPRJMOD}/Library/TPS54331DR/TPS54331DR.kicad_sym")(options "")(descr ""))
+  (lib (name "TEENSY")(type "KiCad")(uri "${KIPRJMOD}/Library/teensy_library/teensy.kicad_sym")(options "")(descr ""))
+  (lib (name "MaltSymbolLib")(type "KiCad")(uri "${KIPRJMOD}/Library/MaltWhiskey/MaltSymbolLib.kicad_sym")(options "")(descr ""))
+)

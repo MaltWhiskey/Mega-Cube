@@ -1,0 +1,6 @@
+(fp_lib_table
+  (lib (name "MaltWhiskey")(type "KiCad")(uri "${KIPRJMOD}/Library/MaltWhiskey")(options "")(descr ""))
+  (lib (name "MAX98357A")(type "KiCad")(uri "${KIPRJMOD}/Library/MAX98357AETE")(options "")(descr ""))
+  (lib (name "TPS54331")(type "KiCad")(uri "${KIPRJMOD}/Library/TPS54331DR")(options "")(descr ""))
+  (lib (name "Teensy")(type "KiCad")(uri "${KIPRJMOD}/Library/teensy.pretty")(options "")(descr ""))
+)

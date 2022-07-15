@@ -3,83 +3,63 @@
 
 #include "Animation.h"
 
-class Object2 {
- public:
-  Vector3 position = Vector3(0, 0, 0);
-  Vector3 velocity = Vector3(0, 0, 0);
-
-  // postition in color pallete
-  uint8_t hue;
-  // (0.0f - 1.0f) -> 0x00 - 0xff
-  float brightness;
-  // seconds to fade brightness to zero
-  float seconds;
-
- public:
-  Object2(Vector3 p = Vector3(0, 0, 0), Vector3 v = Vector3(0, 0, 0),
-          uint8_t h = 0, float b = 1.0f, float s = 1.0f)
-      : position(p), velocity(v), hue(h), brightness(b), seconds(s) {}
-
-  Object2& move(const float dt, const Vector3 gravity) {
-    position = position + velocity * dt;
-    velocity = velocity + gravity * dt;
-    return *this;
-  }
-};
-
 class Fireworks : public Animation {
  private:
+  Timer timer_duration;
+  const float radius = 7.5f;
+
   uint16_t numDebris;
   Vector3 source;
   Vector3 target;
   Vector3 velocity;
   Vector3 gravity;
-  Object2 missile;
-  Object2 debris[200];
+  Particle missile;
+  Particle debris[200];
   uint8_t repeats;
+  boolean exploded;
 
  public:
-  void init(uint8_t repeats_) {
-    repeats = repeats_;
-    if (repeats > 0)
-      task = task_state_t::RUNNING;
-    else {
-      task = task_state_t::INACTIVE;
-      return;
-    }
-    // calculate source normally divided from source area
-    source = Vector3(noise.nextGaussian((float)Display::width / 2.0f, 2.0f), 0,
-                     noise.nextGaussian((float)Display::depth / 2.0f, 2.0f));
-    // calculate targets normally divided from target area
-    target =
-        Vector3(noise.nextGaussian((float)Display::width / 2.0f, 2.0f),
-                noise.nextGaussian((float)8.0f * Display::height / 10.0f, 1.0f),
-                noise.nextGaussian((float)Display::depth / 2.0f, 2.0f));
+  void init(float duration) {
+    state = state_t::RUNNING;
+    timer_duration = duration;
+    fireArrow();
+  }
+
+  void fireArrow() {
+    // calculate source normally divided
+    source = Vector3(noise.nextGaussian(0.0f, 0.25f), -1.0f,
+                     noise.nextGaussian(0.0f, 0.25f));
+    // calculate target normally divided
+    target = Vector3(noise.nextGaussian(0.0f, 0.25f),
+                     noise.nextGaussian(0.8f, 0.10f),
+                     noise.nextGaussian(0.0f, 0.25f));
     // Assign a time in seconds to reach the target
-    float t = noise.nextGaussian(0.60f, 0.25f);
+    float t = noise.nextGaussian(0.60f, 0.20f);
     // Determine directional velocities in pixels per second
     velocity = (target - source) / t;
     // Set missile source and velocity
     missile.position = source;
     missile.velocity = velocity;
     // Set some system gravity
-    gravity = Vector3(0, -8.0f, 0);
+    gravity = Vector3(0, -1.0f, 0);
+    exploded = false;
   }
 
   void draw(float dt) {
+    setMotionBlur(config.animation.fireworks.motionBlur);
     // Missile drawing mode
-    if (target.y > 0) {
+    if (!exploded) {
       Vector3 temp = missile.position;
       missile.move(dt, gravity);
       // If missile falls back to earth or moved past the target explode it
       if ((temp.y > missile.position.y) | (missile.position.y > target.y)) {
         // Activate explode drawing mode
-        target.y = 0;
+        exploded = true;
         // If target is reached the missile is exploded and debris is formed
-        numDebris = random((sizeof(debris) / sizeof(Object2)) / 2,
-                           sizeof(debris) / sizeof(Object2));
+        numDebris = random((sizeof(debris) / sizeof(Particle)) / 2,
+                           sizeof(debris) / sizeof(Particle));
         // Overall exploding power of particles for all debris
-        float pwr = noise.nextRandom(4.0f, 8.0f);
+        float pwr = noise.nextRandom(0.50f, 1.00f);
         // starting position in the hue color palette
         uint8_t hue = (uint8_t)random(0, 256);
         // generate debris with power and hue
@@ -91,20 +71,19 @@ class Fireworks : public Animation {
           debris[i] = {temp, explode, uint8_t(hue + random(0, 64)), 1.0f,
                        noise.nextRandom(1.0f, 2.0f)};
         }
-      } else if (missile.position.inside(
-                     Vector3(0, 0, 0),
-                     Vector3(Display::width, Display::height, Display::depth)))
-        Display::cube[(uint8_t)missile.position.x][(uint8_t)missile.position.y]
-                     [(uint8_t)missile.position.z] = Color(Color::WHITE);
+      } else {
+        voxel(missile.position * radius, Color::WHITE);
+      }
     }
+
     // Explosion drawing mode
-    if (target.y == 0) {
+    if (exploded) {
       uint16_t visible = 0;
       for (uint16_t i = 0; i < numDebris; i++) {
-        if (debris[i].position.y > 0)
+        if (debris[i].position.y > -1.0f)
           debris[i].move(dt, gravity);
         else
-          debris[i].position.y = 0;
+          debris[i].position.y = -1.0f;
         if (debris[i].brightness > 0) {
           visible++;
           debris[i].brightness -= dt * (1 / debris[i].seconds);
@@ -112,19 +91,22 @@ class Fireworks : public Animation {
           debris[i].brightness = 0;
         }
         Color c = Color(debris[i].hue, RainbowGradientPalette);
-        // Add sparkles
+        // Add some random sparkles
         if (random(0, 20) == 0) {
           c = Color::WHITE;
         }
         c.scale(debris[i].brightness * 255);
-        if (debris[i].position.inside(
-                Vector3(0, 0, 0),
-                Vector3(Display::width, Display::height, Display::depth)))
-          Display::cube[(uint8_t)debris[i].position.x]
-                       [(uint8_t)debris[i].position.y]
-                       [(uint8_t)debris[i].position.z] += c;
+        voxel_add(debris[i].position * radius, c);
       }
-      if (visible == 0) init(--repeats);
+      if (timer_duration.update()) {
+        state = state_t::ENDING;
+      }
+      if (visible == 0) {
+        if (state == state_t::ENDING)
+          state = state_t::INACTIVE;
+        else
+          fireArrow();
+      }
     }
   }
 };

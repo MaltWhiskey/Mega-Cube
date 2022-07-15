@@ -16,10 +16,14 @@ class Display {
   static const uint8_t height = 16;
   static const uint8_t depth = 16;
   static Color cube[width][height][depth];
-  // Gamma correction table
-  static const uint8_t gamma8[256];
 
  private:
+  static Color buff[width][height][depth];
+
+ private:
+  // Special display effect for all animations
+  static uint8_t motionBlur;
+  static uint8_t brightness;
   // Amount of bits per led (keep at 24 for RGB)
   static const uint8_t BITCOUNT = 24;
   // Amount of leds per channel
@@ -63,10 +67,9 @@ class Display {
   static bool available();
   // Clear the cube so a new frame can be created fresh
   static void clear();
-  // Radiate light from a pixel in the cube
-  static void radiate(const Vector3 &, const Color &, float length,
-                      boolean gamma = false);
-  // Draw a line though this cube
-  static void line(Vector3);
+  // Set the motion blur value higher is more blur
+  static void setMotionBlur(const uint8_t value);
+  // Set the master display brightness value
+  static void setBrightness(const uint8_t value);
 };
 #endif
