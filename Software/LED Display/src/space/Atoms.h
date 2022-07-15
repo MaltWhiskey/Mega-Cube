@@ -6,122 +6,92 @@
 
 class Atoms : public Animation {
  private:
+  const static uint8_t ATOMS = 9;
+
   float angle;
   float angular_speed;
   uint16_t hue_speed;
+  float max_radius;
+  float start_radius = 0;
+  float start_angle = 0;
+  float radius;
 
   Timer timer_duration;
-  Timer timer_interval;
-  float time_expansion = 2.0f;
-  float time_contraction = 5.0f;
-
-  const static uint8_t ATOMS = 6;
-  Vector3 atoms[ATOMS] = {
-      Vector3(1, 0, 0),  Vector3(0, 1, 0),  Vector3(0, 0, 1),
-      Vector3(-1, 0, 0), Vector3(0, -1, 0), Vector3(0, 0, -1),
-  };
+  float time_expansion;
+  float time_contraction;
 
  public:
-  void init() {
-    task = task_state_t::RUNNING;
-    timer_duration = 60.0f;
-
-    angle = 0;
-    angular_speed = 2.0f;
-    hue_speed = 30;
+  void init(float duration, float expansion, float contraction,
+            float anglespeed, float radius_, uint16_t hue_speed_) {
+    state = state_t::STARTING;
+    timer_duration = duration;
+    angular_speed = anglespeed;
+    hue_speed = hue_speed_;
+    max_radius = radius_;
+    time_expansion = expansion;
+    time_contraction = contraction;
+    angle = start_angle;
+    radius = start_radius;
   }
 
   void draw(float dt) {
+    setMotionBlur(config.animation.atoms.motionBlur);
+    if (timer_duration.update()) {
+      state = state_t::ENDING;
+    }
+    if (state == state_t::STARTING) {
+      radius += dt * max_radius / time_expansion;
+      if (radius > max_radius) {
+        radius = max_radius;
+        state = state_t::RUNNING;
+      }
+    }
+    if (state == state_t::ENDING) {
+      radius -= dt * max_radius / time_contraction;
+      if (radius < start_radius) {
+        radius = start_radius;
+        state = state_t::INACTIVE;
+      }
+    }
+    uint8_t scale = 255;
+    float threshold = 0.4f;
+    float progress = (radius - start_radius) / max_radius;
+    if (progress < threshold) {
+      scale *= (progress * (1 / threshold));
+    }
+
     angle += angular_speed * dt;
     hue16 += (int16_t)(255 * hue_speed * dt);
+    float a = angle * 1.0f;
+    float t = angle * 0.1f;
 
-    Vector3 axis =
-        Vector3(+sinf(angle), +sinf(angle * 1.17f), +sinf(angle * 1.33));
+    Quaternion axes[ATOMS] = {
+        Quaternion(t, Vector3(+sinf(a / 95), +sinf(a / 75), -sinf(a / 95))),
+        Quaternion(t, Vector3(+sinf(a / 90), -sinf(a / 85), -sinf(a / 95))),
+        Quaternion(t, Vector3(-sinf(a / 94), +sinf(a / 80), -sinf(a / 75))),
+        Quaternion(t, Vector3(+sinf(a / 90), +sinf(a / 70), -sinf(a / 90))),
+        Quaternion(t, Vector3(+sinf(a / 80), -sinf(a / 70), -sinf(a / 99))),
+        Quaternion(t, Vector3(-sinf(a / 99), +sinf(a / 90), -sinf(a / 80))),
+        Quaternion(t, Vector3(-sinf(a / 90), -sinf(a / 90), +sinf(a / 99))),
+        Quaternion(t, Vector3(-sinf(a / 70), -sinf(a / 80), -sinf(a / 90))),
+        Quaternion(t, Vector3(-sinf(a / 99), +sinf(a / 70), +sinf(a / 80)))};
 
-    for (uint8_t i = 0; i < ATOMS; i++) {
-      Vector3 v = axis.rotate(100, atoms[i]);
-      v *= Vector3(5, 5, 5);
-      v += Vector3(7.5f, 7.5f, 7.5f);
-      Color c = Color((hue16 >> 8) + (i * 8), RainbowGradientPalette);
-      Display::radiate(v, c, 2.8f, true);
-    }
-    Display::line(axis);
-
-    if (timer_duration.update()) {
-      task = task_state_t::INACTIVE;
-    }
-  }
-};
-#endif
-#ifndef ATOMS_H
-#define ATOMS_H
-
-#include "Animation.h"
-#include "Power/Math8.h"
-
-class Atoms : public Animation {
- private:
-  float angle1;
-  float angular_speed1;
-  float angle2;
-  float angular_speed2;
-  int16_t hue_speed;
-  bool expansion;
-
-  Timer timer_duration;
-  Timer timer_interval;
-  float time_expansion = 2.0f;
-  float time_contraction = 5.0f;
-
-  const static uint8_t ATOMS = 6;
-  Vector3 atoms[ATOMS] = {
-      Vector3(1, 0, 0),  Vector3(0, 1, 0),  Vector3(0, 0, 1),
-      Vector3(-1, 0, 0), Vector3(0, -1, 0), Vector3(0, 0, -1),
-  };
-
- public:
-  void init() {
-    task = task_state_t::RUNNING;
-    timer_duration = 60.0f;
-    timer_interval = time_expansion;
-
-    angle1 = 0;
-    angle2 = 0;
-    expansion = true;
-    angular_speed1 = 55.0f;
-    angular_speed2 = 73.0f;
-    hue_speed = 30;
-  }
-
-  void draw(float dt) {
-    angle1 += angular_speed1 * dt;
-    angle2 -= angular_speed2 * dt;
-
-    hue16 += (int16_t)(255 * hue_speed * dt);
-
-    Vector3 axes[ATOMS];
-    axes[0] =
-        Vector3(+sinf(angle1 / 90), +sinf(angle1 / 70), -sinf(angle1 / 90));
-    axes[1] =
-        Vector3(+sinf(angle1 / 80), -sinf(angle1 / 70), -sinf(angle1 / 99));
-    axes[2] =
-        Vector3(-sinf(angle1 / 99), +sinf(angle1 / 90), -sinf(angle1 / 80));
-    axes[3] =
-        Vector3(-sinf(angle1 / 90), -sinf(angle1 / 90), +sinf(angle1 / 99));
-    axes[4] =
-        Vector3(-sinf(angle1 / 70), -sinf(angle1 / 80), -sinf(angle1 / 90));
-    axes[5] =
-        Vector3(-sinf(angle1 / 99), +sinf(angle1 / 70), +sinf(angle1 / 80));
+    // Use normalized vectors to limit radius to length 1
+    Vector3 atoms[ATOMS] = {Vector3(1, 0, 0),
+                            Vector3(0, 1, 0),
+                            Vector3(0, 0, 1),
+                            Vector3(-1, 0, 0),
+                            Vector3(0, -1, 0),
+                            Vector3(0, 0, -1),
+                            Vector3(1, 0, 1).normalize(),
+                            Vector3(1, 1, 0).normalize(),
+                            Vector3(0, 1, 1).normalize()};
 
     for (uint8_t i = 0; i < ATOMS; i++) {
-      Vector3 v = axes[i].rotate(angle2, atoms[i]);
-      v *= Vector3(5, 5, 5);
-      v += Vector3(8, 8, 8);
+      Vector3 v = axes[i].rotate(atoms[i]) * radius;
       Color c = Color((hue16 >> 8) + (i * 8), RainbowGradientPalette);
-      Display::radiate(v, c, 2.8f, true);
-    }
-    if (timer_duration.update()) {
-      task = task_state_t::INACTIVE;
+      radiate4(v, c.scale(scale), 4.0f);
+      // line(axes[i].v);
     }
   }
 };

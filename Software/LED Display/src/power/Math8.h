@@ -39,4 +39,16 @@ static inline uint8_t qsub8(uint8_t a, uint8_t b) {
 static inline uint8_t scale8(uint8_t i, uint8_t scale) {
   return (((uint16_t)i) * (1 + (uint16_t)(scale))) >> 8;
 }
+// Blend A with B (amount_b range = 0 to 255)
+// Blend8 diverges to 0 and to 255 but not necessarily to other values
+// Scale8 isn't meant for blending but only mapping between values,
+// Scale8 will always diverge if you adjust the scale, but not while
+// blending without keeping source and origional colors.
+static inline uint8_t blend8(uint8_t amount_b, uint8_t a, uint8_t b) {
+  uint16_t partial;
+  partial = (a << 8) | b;
+  partial += (b * amount_b);
+  partial -= (a * amount_b);
+  return partial >> 8;
+}
 #endif

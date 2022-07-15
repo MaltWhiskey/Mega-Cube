@@ -27,7 +27,7 @@ class Twinkels : public Animation {
 
  public:
   void init(float duration, boolean single = false, boolean fade_out = false) {
-    task = task_state_t::RUNNING;
+    state = state_t::RUNNING;
     timer_duration = duration;
     mode_single_color = single;
     mode_fade_out = fade_out;
@@ -47,36 +47,37 @@ class Twinkels : public Animation {
         }
   }
   void draw(float dt) {
-    bool pixels_active = false;
+    setMotionBlur(config.animation.twinkels.motionBlur);
+    uint16_t pixels_active = 0;
+
     for (uint8_t x = 0; x < Display::width; x++) {
       for (uint8_t y = 0; y < Display::height; y++) {
         for (uint8_t z = 0; z < Display::depth; z++) {
           if (!colors[x][y][z].isBlack()) {
             if (time[x][y][z] < fade_in_speed) {
               float t = time[x][y][z] / fade_in_speed;
-              Color c = colors[x][y][z];
-              Display::cube[x][y][z] = c.scale(255 * t);
+              voxel(x, y, z, colors[x][y][z].scaled(255 * t));
               time[x][y][z] += dt;
-            } else if (time[x][y][z] < fade_in_speed + fade_out_speed) {
+              pixels_active++;
+            } else if (time[x][y][z] < (fade_in_speed + fade_out_speed)) {
               float t = (time[x][y][z] - fade_in_speed) / fade_out_speed;
-              Color c = colors[x][y][z];
-              Display::cube[x][y][z] = c.scale(255 * (1 - t));
+              voxel(x, y, z, colors[x][y][z].scaled(255 * (1 - t)));
               time[x][y][z] += dt;
+              pixels_active++;
             } else {
               time[x][y][z] = 0;
               colors[x][y][z] = Color::BLACK;
-              Display::cube[x][y][z] = Color::BLACK;
+              voxel(x, y, z, Color::BLACK);
             }
-            pixels_active = true;
           }
         }
       }
     }
     if (timer_duration.update()) {
-      task = task_state_t::ENDING;
+      state = state_t::ENDING;
     }
     // Consider adding a new random twinkle
-    if (task != task_state_t::ENDING) {
+    if (state != state_t::ENDING) {
       if (timer_interval.update()) {
         uint8_t x = random(0, Display::width);
         uint8_t y = random(0, Display::height);
@@ -90,11 +91,11 @@ class Twinkels : public Animation {
         }
       }
     } else if (mode_fade_out) {
-      if (!pixels_active) {
-        task = task_state_t::INACTIVE;
+      if (pixels_active == 0) {
+        state = state_t::INACTIVE;
       }
     } else {
-      task = task_state_t::INACTIVE;
+      state = state_t::INACTIVE;
     }
   }
 };

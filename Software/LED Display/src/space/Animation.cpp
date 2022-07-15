@@ -1,5 +1,6 @@
 #include "Animation.h"
 
+#include "Accelerometer.h"
 #include "Arrows.h"
 #include "Atoms.h"
 #include "Fireworks.h"
@@ -7,7 +8,10 @@
 #include "Life.h"
 #include "Mario.h"
 #include "Plasma.h"
+#include "Pong.h"
+#include "Scroller.h"
 #include "Sinus.h"
+#include "Spectrum.h"
 #include "Starfield.h"
 #include "Twinkels.h"
 /*------------------------------------------------------------------------------
@@ -30,51 +34,55 @@ Arrows arrows;
 Plasma plasma;
 Mario mario;
 Life life;
-Animation *Animations[] = {&atoms,      &sinus,    &starfield, &fireworks1,
-                           &fireworks2, &twinkels, &helix,     &arrows,
-                           &plasma,     &mario,    &life};
+Pong pong;
+Scroller scroller;
+Accelerometer accelerometer;
+Spectrum spectrum;
+
+Animation *Animations[] = {&atoms,      &sinus,    &starfield,    &fireworks1,
+                           &fireworks2, &twinkels, &helix,        &arrows,
+                           &plasma,     &mario,    &life,         &pong,
+                           &spectrum,   &scroller, &accelerometer};
+
 const uint8_t ANIMATIONS = sizeof(Animations) / sizeof(Animation *);
 /*----------------------------------------------------------------------------*/
 // Start display asap to minimize PL9823 blue startup
 void Animation::begin() { Display::begin(); }
-// Gracefully terminate animation
-void Animation::end() { task = task_state_t::ENDING; }
 
 // Render an animation frame, but only if the display allows it (non blocking)
 void Animation::animate() {
   // Only draw to the display if it's available
   if (Display::available()) {
-    // Clear the display before drawing any animations
-    Display::clear();
     // Update the animation timer to determine frame deltatime
     animation_timer.update();
+    // Clear the display before drawing any animations
+    Display::clear();
     // Draw all active animations from the animation pool
-    uint8_t active_count = 0;
+    uint8_t active_animation_count = 0;
     for (uint8_t i = 0; i < ANIMATIONS; i++) {
       Animation &animation = *Animations[i];
-      if (animation.task != task_state_t::INACTIVE) {
+      if (animation.state != state_t::INACTIVE) {
         animation.draw(animation_timer.dt());
       }
-      if (animation.task != task_state_t::INACTIVE) {
-        active_count++;
-        if (config.animation.animation < ANIMATIONS) {
-          animation.end();
-        }
+      // Animation can become inactive after drawing so check again
+      if (animation.state != state_t::INACTIVE) {
+        active_animation_count++;
+        if (config.hid.stick.press) animation.end();
       }
     }
-    if (active_count == 0) {
-      if (config.animation.animation < ANIMATIONS) {
-        Animation::select();
-      } else {
-        Animation::next();
-      }
+    // Select the next or specific animation from the sequence list
+    if (active_animation_count == 0) {
+      Animation::next(config.animation.endless, config.animation.animation);
     }
     // Commit current animation frame to the display
     Display::update();
   }
 }
 
-// Get fps, if animate has been called t > 0
+// Override end method if more is needed than changing state
+void Animation::end() { state = state_t::ENDING; }
+
+// Get fps, if animate has been called (t > 0)
 float Animation::fps() {
   if (animation_timer.dt() > 0) {
     return 1 / animation_timer.dt();
@@ -82,61 +90,94 @@ float Animation::fps() {
   return 0;
 }
 
-void SEQ_TWINKEL_WHITE_00(void) {
-  twinkels.init(config.twinkels.timer_duration, true, false);
-  twinkels.speed(config.twinkels.timer_interval, config.twinkels.fade_in_speed,
-                 config.twinkels.fade_out_speed);
+void TWINKEL_WHITE(boolean endless) {
+  auto &_ = config.animation.twinkels;
+  twinkels.init(endless ? 0 : _.timer_duration, true, false);
+  twinkels.speed(_.timer_interval, _.fade_in_speed, _.fade_out_speed);
   twinkels.color(Color(255, 150, 30));
   twinkels.clear();
 }
-void SEQ_TWINKEL_MULTI_00(void) {
-  twinkels.init(config.twinkels.timer_duration, false, true);
-  twinkels.speed(config.twinkels.timer_interval, config.twinkels.fade_in_speed,
-                 config.twinkels.fade_out_speed);
+void TWINKEL_MULTI(boolean endless) {
+  auto &_ = config.animation.twinkels;
+  twinkels.init(endless ? 0 : _.timer_duration, false, true);
+  twinkels.speed(_.timer_interval, _.fade_in_speed, _.fade_out_speed);
 }
-void SEQ_SINUS_00(void) {
-  sinus.init(5, 20, 10);
-  sinus.speed(PI, -50);
+void STARFIELD(boolean endless) {
+  auto &_ = config.animation.starfield;
+  starfield.init(_.fade_in_speed, endless ? 0 : _.timer_duration,
+                 _.fade_out_speed);
+  starfield.speed(_.phase_speed, _.hue_speed);
 }
-void SEQ_FIREWORKS_00(void) {
-  fireworks1.init(5);
-  fireworks2.init(5);
+void SINUS(boolean endless) {
+  auto &_ = config.animation.sinus;
+  sinus.init(_.fade_in_speed, endless ? 0 : _.timer_duration, _.fade_out_speed,
+             _.radius);
+  sinus.speed(_.phase_speed, _.hue_speed);
 }
-void SEQ_STARFIELD_00(void) {
-  starfield.init(config.starfield.fade_in_speed,
-                 config.starfield.timer_duration,
-                 config.starfield.fade_out_speed);
-  starfield.speed(config.starfield.phase_speed, config.starfield.hue_speed);
+void FIREWORKS(boolean endless) {
+  auto &_ = config.animation.fireworks;
+  fireworks1.init(endless ? 0 : _.timer_duration);
+  fireworks2.init(endless ? 0 : _.timer_duration);
 }
-void SEQ_HELIX_00(void) { helix.init(); }
-void SEQ_ATOMS_00(void) { atoms.init(); }
-void SEQ_ARROWS_00(void) { arrows.init(); }
-void SEQ_PLASMA_00(void) { plasma.init(); }
-void SEQ_MARIO_00(void) { mario.init(); }
-void SEQ_LIFE_00(void) { life.init(); }
+void PLASMA(boolean endless) {
+  auto &_ = config.animation.plasma;
+  plasma.init(_.fade_in_speed, endless ? 0 : _.timer_duration,
+              _.fade_out_speed);
+}
+void HELIX(boolean endless) {
+  auto &_ = config.animation.helix;
+  helix.init(endless ? 0 : _.timer_duration, _.timer_interval);
+  helix.speed(_.phase_speed, _.hue_speed);
+}
+void MARIO(boolean endless) {
+  auto &_ = config.animation.mario;
+  mario.init(endless ? 0 : _.timer_duration, _.time_expansion,
+             _.time_contraction, _.timer_interval, _.angular_speed, _.radius);
+}
+void ARROWS(boolean endless) {
+  auto &_ = config.animation.arrows;
+  arrows.init(endless ? 0 : _.timer_duration, _.time_expansion,
+              _.time_contraction, _.angular_speed, _.radius, _.hue_speed);
+}
+void ATOMS(boolean endless) {
+  auto &_ = config.animation.atoms;
+  atoms.init(endless ? 0 : _.timer_duration, _.time_expansion,
+             _.time_contraction, _.angular_speed, _.radius, _.hue_speed);
+}
+void PONG(boolean endless) {
+  auto &_ = config.animation.pong;
+  pong.init(endless ? 0 : _.timer_duration, _.time_fading, _.hue_speed);
+}
+void LIFE(boolean endless) {
+  auto &_ = config.animation.life;
+  life.init(endless ? 0 : _.timer_duration, _.time_fading);
+}
+void SPECTRUM(boolean endless) {
+  auto &_ = config.animation.spectrum;
+  spectrum.init(endless ? 0 : _.timer_duration, _.hue_speed);
+}
+void SCROLLER(boolean endless) {
+  auto &_ = config.animation.scroller;
+  scroller.init(endless ? 0 : _.timer_duration, _.rotation_speed,
+                "MALT WHISKEY :'<=>?@*+!,./\xff\0");
+}
+void ACCELEROMETER(boolean endless) {
+  auto &_ = config.animation.accelerometer;
+  accelerometer.init(endless ? 0 : _.timer_duration);
+}
 
-// Animation sequencer jumptable implementation
-void Animation::next() {
-  static void (*jump_table[])() =  //
-      {&SEQ_LIFE_00,          &SEQ_MARIO_00,        &SEQ_PLASMA_00,
-       &SEQ_ARROWS_00,        &SEQ_ATOMS_00,        &SEQ_HELIX_00,
-       &SEQ_STARFIELD_00,     &SEQ_FIREWORKS_00,    &SEQ_SINUS_00,
-       &SEQ_TWINKEL_WHITE_00, &SEQ_TWINKEL_MULTI_00};
-  if (animation_sequence >= sizeof(jump_table) / sizeof(void *)) {
-    animation_sequence = 0;
-  }
-  jump_table[animation_sequence++]();
-}
-
-// Animation selector jumptable implementation
-void Animation::select() {
-  static void (*jump_table[])() =  //
-      {&SEQ_FIREWORKS_00, &SEQ_SINUS_00, &SEQ_TWINKEL_WHITE_00,
-       &SEQ_TWINKEL_MULTI_00};
-  if (config.animation.animation >= sizeof(jump_table) / sizeof(void *)) {
-    Animation::next();
+// Animation sequencer (jumptable)
+void Animation::next(boolean endless, uint8_t index) {
+  static void (*jump_table[])(boolean endless) =  //
+      {&ACCELEROMETER, &SCROLLER,  &SPECTRUM, &PONG,          &LIFE,
+       &FIREWORKS,     &STARFIELD, &HELIX,    &SINUS,         &ATOMS,
+       &ARROWS,        &MARIO,     &PLASMA,   &TWINKEL_WHITE, &TWINKEL_MULTI};
+  if (endless && (index < sizeof(jump_table) / sizeof(void *))) {
+    jump_table[index](true);
   } else {
-    jump_table[config.animation.animation]();
+    if (animation_sequence >= sizeof(jump_table) / sizeof(void *)) {
+      animation_sequence = 0;
+    }
+    jump_table[animation_sequence++](false);
   }
-  config.animation.animation = 0xff;
 }

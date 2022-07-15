@@ -4,48 +4,54 @@
 #include "Core/Config.h"
 #include "Core/LCD.h"
 #include "Space/animation.h"
-#include "core/Wifi.h"
-/*---------------------------------------------------------------------------------------
+#include "core/ESP8266.h"
+/*------------------------------------------------------------------------------
  * Globals
- *-------------------------------------------------------------------------------------*/
+ *----------------------------------------------------------------------------*/
 Config config;
-LCD lcd;
-// Wifi wifi;
 /*------------------------------------------------------------------------------
  * Initialize setup parameters
  *----------------------------------------------------------------------------*/
 void setup() {
+  // Start with clearing blue leds asap
   Animation::begin();
+  // Serial output to usb for console display
   Serial.begin(115200);
-  Serial1.begin(115200);
-  delay(5000);
-  // setupw();
-  // lcd.begin();
+  // ESP8266 UART baudrate on Hardware Serial1
+  Serial1.begin(460800);
+  // Prevents RX buffer overflow if not reading fast enough
+  static char read_buffer[4096];
+  Serial1.addMemoryForRead(read_buffer, sizeof(read_buffer));
+  // Prevents TX buffer overflow and blocking the program
+  static char write_buffer[4096];
+  Serial1.addMemoryForWrite(write_buffer, sizeof(write_buffer));
+  // Safety delay in case of code crash
+  delay(2000);
+  // Request time from Internet, the UART or Internet might fail
+  ESP8266::request_time();
+  delay(3000);
 }
 /*------------------------------------------------------------------------------
  * Start the main loop
  *----------------------------------------------------------------------------*/
-void serial();
 void loop() {
-  // Print FPS once every second
-  static Timer print_interval = 0.1f;
+  // Print FPS once every x seconds
+  static Timer print_interval = 10.0f;
+
   Animation::animate();
-  // lcd.update();
+  ESP8266::loop();
+
   if (print_interval.update()) {
     static char fps[20];
     sprintf(fps, "FPS=%1.2f", Animation::fps());
-    // lcd.print(fps);
-  }
-  // serial();
-  // loopw();
-}
-
-void serial() {
-  if (Serial1.available()) {
-    Serial.write(Serial1.read());
-  }
-
-  if (Serial.available()) {
-    Serial1.write(Serial.read());
+    Serial.println(fps);
+    // Serial1.println(fps);
+    // Serial1.print("\xf8\xfa");
+    // Serial1.flush();
+    // Testing connection from teensy to esp to wio terminal
+    // Send end esp and end wio commands to reset bit errors
+    // static uint8_t byte = 0;
+    // Serial1.printf("\xf8\xfa%02X ", byte++);
+    // Serial1.flush();
   }
 }

@@ -1,0 +1,26 @@
+Comment,Designator,Footprint,LCSC Part #
+0.1uF Unpolarized capacitor,"C12,C14",C_0402_1005Metric,C307331
+10uF Unpolarized capacitor,"C13,C15",C_0402_1005Metric,C15525
+0.1uF Unpolarized capacitor,"C16,C18,C20,C22,C23,C24,C25",C_0603_1608Metric,C14663
+22uF Unpolarized capacitor,"C17,C19,C21",C_0603_1608Metric,C59461
+100nF Unpolarized capacitor,C_BOOT1,C_0603_1608Metric,C14663
+1nF Unpolarized capacitor,C_COMP1,C_0603_1608Metric,C1588
+10pF Unpolarized capacitor,C_COMP2,C_0603_1608Metric,C1634
+0.1uF Unpolarized capacitor,C_IN_1,C_1206_3216Metric,C24497
+22uF Unpolarized capacitor,C_IN_2,C_1206_3216Metric,C12891
+47uF Unpolarized capacitor,"C_OUT_1,C_OUT_2,C_OUT_3",C_1206_3216Metric,C96123
+10nF Unpolarized capacitor,C_SS1,C_0603_1608Metric,C57112
+"SS54 40V 3A Schottky Barrier Rectifier Diode, SMC",D1,D_SMA,C22452
+"WROOM32 RF Module, ESP32-D0WDQ6 SoC, Wi-Fi 802.11b/g/n, Bluetooth, BLE, 32-bit, 2.7-3.6V, onboard antenna, SMD","ESP_1,ESP_2,ESP_3",ESP32-WROOM-32,C82899
+3.3uH Inductor symbol for simulation only,L1,L_Sunltech_SLO0630H_7.1x6.6mm,C207839
+220 Resistor,"R6,R7,R8,R9,R10,R11,R12,R13,R15,R16,R17,R18,R19,R20,R21,R22,R23,R24,R25,R26,R27,R28,R29,R30,R31,R32,R33,R34,R35,R36,R37,R38,R39,R40,R41,R42,R43,R44,R48,R49,R50,R51,R52,R53",R_0402_1005Metric,C25091
+210K Resistor,R14,R_0402_1005Metric,C25767
+10K Resistor,"R45,R46,R47",R_0402_1005Metric,C25744
+47K Resistor,R_COMP1,R_0603_1608Metric,C25819
+75K Resistor,R_EN_B1,R_0603_1608Metric,C23242
+160K Resistor,R_EN_T1,R_0603_1608Metric,C22813
+3.3K Resistor,R_FB_B1,R_0603_1608Metric,C22978
+10K Resistor,R_FB_T1,R_0603_1608Metric,C25804
+TPS54331DR ,U2,SOIC127P599X175-8N,C9865
+74AHC595 8-bit serial in/out Shift Register 3-State Outputs,"U4,U6,U10,U11",SOIC-16_3.9x9.9mm_P1.27mm,C133793
+MAX98357AETE ,"U8,U9",QFN50P300X300X80-17N,C910544

@@ -10,6 +10,10 @@
 /*------------------------------------------------------------------------------
  * Vector3 CLASS
  *----------------------------------------------------------------------------*/
+const Vector3 Vector3::Y(0, 1, 0);
+const Vector3 Vector3::X(1, 0, 0);
+const Vector3 Vector3::Z(0, 0, 1);
+
 Vector3::Vector3() : x(0.0f), y(0.0f), z(0.0f){};
 Vector3::Vector3(float x_, float y_, float z_) : x(x_), y(y_), z(z_){};
 Vector3::Vector3(const Vector3& v) : x(v.x), y(v.y), z(v.z){};
@@ -98,7 +102,6 @@ bool Vector3::inside(const Vector3& l, const Vector3& h) const {
   return (x < h.x && x >= l.x) && (y < h.y && y >= l.y) &&
          (z < h.z && z >= l.z);
 }
-
 /*------------------------------------------------------------------------------
  * Quaternion CLASS
  *----------------------------------------------------------------------------*/

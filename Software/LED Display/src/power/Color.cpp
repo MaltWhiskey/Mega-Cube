@@ -44,9 +44,10 @@ Color::Color(const uint8_t index, const uint8_t* pallete) {
     blue = pallete[i + 3];
   }
 }
-// Create a color blend between source and target. Scaler determine how much
-// between scaler = 000 -> (source +   0% delta) = source scaler = 255 ->
-// (source + 100% delta) = target
+// Create a color between source and target. Scaler determine how much between
+// scalar = 000 -> source
+// scalar = 200 -> (55/256)% source + (200/256)% target
+// scalar = 255 -> target
 Color::Color(const uint8_t scalar, const Color& source, const Color& target) {
   red = map8(scalar, source.r, target.r);
   green = map8(scalar, source.g, target.g);
@@ -59,13 +60,33 @@ Color& Color::scale(const uint8_t scalar) {
   blue = map8(scalar, blue);
   return *this;
 }
+// Blends a color between source and target, diverges to 0 and 255
+Color& Color::blend(const uint8_t scalar, const Color& target) {
+  r = blend8(scalar, r, target.r);
+  g = blend8(scalar, g, target.g);
+  b = blend8(scalar, b, target.b);
+  return *this;
+}
 // Create a color blend between 0x00 and 0xff. Scaler determine how much between
 Color Color::scaled(const uint8_t scalar) const {
   return Color(map8(scalar, red), map8(scalar, green), map8(scalar, blue));
 }
+// Chooses maximium of two different colors
+Color& Color::maximize(const Color& c) {
+  r = max(red, c.red);
+  g = max(green, c.green);
+  b = max(blue, c.blue);
+  return *this;
+}
 bool Color::isBlack() const { return (r | g | b) == 0; }
 bool Color::operator==(const Color& c) const {
   return ((red == c.r) & (green == c.g) & (blue == c.b));
+}
+Color& Color::gamma() {
+  red = GAMMA[red];
+  green = GAMMA[green];
+  blue = GAMMA[blue];
+  return *this;
 }
 Color Color::operator+(const Color& c) const { return Color(*this) += c; }
 Color Color::operator-(const Color& c) const { return Color(*this) -= c; }
@@ -103,6 +124,25 @@ const Color Color::PINK(0x80, 0x30, 0x80);
 const Color Color::CYAN(0x00, 0xFF, 0xFF);
 const Color Color::MAGENTA(0xFF, 0x00, 0xFF);
 const Color Color::BROWN(0x7B, 0x40, 0x13);
+const uint8_t Color::GAMMA[256] = {
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   1,   1,
+    1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   2,   2,   2,   2,
+    2,   2,   2,   2,   3,   3,   3,   3,   3,   3,   3,   4,   4,   4,   4,
+    4,   5,   5,   5,   5,   6,   6,   6,   6,   7,   7,   7,   7,   8,   8,
+    8,   9,   9,   9,   10,  10,  10,  11,  11,  11,  12,  12,  13,  13,  13,
+    14,  14,  15,  15,  16,  16,  17,  17,  18,  18,  19,  19,  20,  20,  21,
+    21,  22,  22,  23,  24,  24,  25,  25,  26,  27,  27,  28,  29,  29,  30,
+    31,  32,  32,  33,  34,  35,  35,  36,  37,  38,  39,  39,  40,  41,  42,
+    43,  44,  45,  46,  47,  48,  49,  50,  50,  51,  52,  54,  55,  56,  57,
+    58,  59,  60,  61,  62,  63,  64,  66,  67,  68,  69,  70,  72,  73,  74,
+    75,  77,  78,  79,  81,  82,  83,  85,  86,  87,  89,  90,  92,  93,  95,
+    96,  98,  99,  101, 102, 104, 105, 107, 109, 110, 112, 114, 115, 117, 119,
+    120, 122, 124, 126, 127, 129, 131, 133, 135, 137, 138, 140, 142, 144, 146,
+    148, 150, 152, 154, 156, 158, 160, 162, 164, 167, 169, 171, 173, 175, 177,
+    180, 182, 184, 186, 189, 191, 193, 196, 198, 200, 203, 205, 208, 210, 213,
+    215, 218, 220, 223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252,
+    255};
 
 // Color gradient Palletes, starts with an index and than red, green, blue
 // The first index starts at 0 and must increase and the last must be 255
