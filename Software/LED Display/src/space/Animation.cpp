@@ -67,12 +67,13 @@ void Animation::animate() {
       // Animation can become inactive after drawing so check again
       if (animation.state != state_t::INACTIVE) {
         active_animation_count++;
-        if (config.hid.button.z) animation.end();
+        if (config.animation.changed) animation.end();
       }
     }
     // Select the next or specific animation from the sequence list
     if (active_animation_count == 0) {
-      Animation::next(config.animation.endless, config.animation.animation);
+      Animation::next(config.animation.changed, config.animation.animation);
+      config.animation.changed = false;
     }
     // Commit current animation frame to the display
     Display::update();
@@ -90,95 +91,91 @@ float Animation::fps() {
   return 0;
 }
 
-void TWINKEL_WHITE(boolean endless) {
+void TWINKEL_WHITE(float f) {
   auto &_ = config.animation.twinkels;
-  twinkels.init(endless ? 0 : _.timer_duration, true, false);
+  twinkels.init(f * _.timer_duration, true, false);
   twinkels.speed(_.timer_interval, _.fade_in_speed, _.fade_out_speed);
   twinkels.color(Color(255, 150, 30));
   twinkels.clear();
 }
-void TWINKEL_MULTI(boolean endless) {
+void TWINKEL_MULTI(float f) {
   auto &_ = config.animation.twinkels;
-  twinkels.init(endless ? 0 : _.timer_duration, false, true);
+  twinkels.init(f * _.timer_duration, false, true);
   twinkels.speed(_.timer_interval, _.fade_in_speed, _.fade_out_speed);
 }
-void STARFIELD(boolean endless) {
+void STARFIELD(float f) {
   auto &_ = config.animation.starfield;
-  starfield.init(_.fade_in_speed, endless ? 0 : _.timer_duration,
-                 _.fade_out_speed);
+  starfield.init(_.fade_in_speed, f * _.timer_duration, _.fade_out_speed);
   starfield.speed(_.phase_speed, _.hue_speed);
 }
-void SINUS(boolean endless) {
+void SINUS(float f) {
   auto &_ = config.animation.sinus;
-  sinus.init(_.fade_in_speed, endless ? 0 : _.timer_duration, _.fade_out_speed,
-             _.radius);
+  sinus.init(_.fade_in_speed, f * _.timer_duration, _.fade_out_speed, _.radius);
   sinus.speed(_.phase_speed, _.hue_speed);
 }
-void FIREWORKS(boolean endless) {
+void FIREWORKS(float f) {
   auto &_ = config.animation.fireworks;
-  fireworks1.init(endless ? 0 : _.timer_duration);
-  fireworks2.init(endless ? 0 : _.timer_duration);
+  fireworks1.init(f * _.timer_duration);
+  fireworks2.init(f * _.timer_duration);
 }
-void PLASMA(boolean endless) {
+void PLASMA(float f) {
   auto &_ = config.animation.plasma;
-  plasma.init(_.fade_in_speed, endless ? 0 : _.timer_duration,
-              _.fade_out_speed);
+  plasma.init(_.fade_in_speed, f * _.timer_duration, _.fade_out_speed);
 }
-void HELIX(boolean endless) {
+void HELIX(float f) {
   auto &_ = config.animation.helix;
-  helix.init(endless ? 0 : _.timer_duration, _.timer_interval);
+  helix.init(f * _.timer_duration, _.timer_interval);
   helix.speed(_.phase_speed, _.hue_speed);
 }
-void MARIO(boolean endless) {
+void MARIO(float f) {
   auto &_ = config.animation.mario;
-  mario.init(endless ? 0 : _.timer_duration, _.time_expansion,
-             _.time_contraction, _.timer_interval, _.angular_speed, _.radius);
+  mario.init(f * _.timer_duration, _.time_expansion, _.time_contraction,
+             _.timer_interval, _.angular_speed, _.radius);
 }
-void ARROWS(boolean endless) {
+void ARROWS(float f) {
   auto &_ = config.animation.arrows;
-  arrows.init(endless ? 0 : _.timer_duration, _.time_expansion,
-              _.time_contraction, _.angular_speed, _.radius, _.hue_speed);
+  arrows.init(f * _.timer_duration, _.time_expansion, _.time_contraction,
+              _.angular_speed, _.radius, _.hue_speed);
 }
-void ATOMS(boolean endless) {
+void ATOMS(float f) {
   auto &_ = config.animation.atoms;
-  atoms.init(endless ? 0 : _.timer_duration, _.time_expansion,
-             _.time_contraction, _.angular_speed, _.radius, _.hue_speed);
+  atoms.init(f * _.timer_duration, _.time_expansion, _.time_contraction,
+             _.angular_speed, _.radius, _.hue_speed);
 }
-void PONG(boolean endless) {
+void PONG(float f) {
   auto &_ = config.animation.pong;
-  pong.init(endless ? 0 : _.timer_duration, _.time_fading, _.hue_speed);
+  pong.init(f * _.timer_duration, _.time_fading, _.hue_speed);
 }
-void LIFE(boolean endless) {
+void LIFE(float f) {
   auto &_ = config.animation.life;
-  life.init(endless ? 0 : _.timer_duration, _.time_fading);
+  life.init(f * _.timer_duration, _.time_fading);
 }
-void SPECTRUM(boolean endless) {
+void SPECTRUM(float f) {
   auto &_ = config.animation.spectrum;
-  spectrum.init(endless ? 0 : _.timer_duration, _.hue_speed);
+  spectrum.init(f * _.timer_duration, _.hue_speed);
 }
-void SCROLLER(boolean endless) {
+void SCROLLER(float f) {
   auto &_ = config.animation.scroller;
-  scroller.init(endless ? 0 : _.timer_duration, _.rotation_speed,
-                "#MALT WHISKEY$\xff");
   // " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\xff");
+  scroller.init(f * _.timer_duration, _.rotation_speed, "#MALT WHISKEY$\xff");
 }
-void ACCELEROMETER(boolean endless) {
+void ACCELEROMETER(float f) {
   auto &_ = config.animation.accelerometer;
-  accelerometer.init(endless ? 0 : _.timer_duration);
+  accelerometer.init(f * _.timer_duration);
 }
 
 // Animation sequencer (jumptable)
-void Animation::next(boolean endless, uint8_t index) {
-  static void (*jump_table[])(boolean endless) =  //
+void Animation::next(boolean changed, uint8_t index) {
+  static void (*jump_table[])(float f) =  //
       {&SCROLLER,  &SPECTRUM, &PONG,          &LIFE,         &FIREWORKS,
        &STARFIELD, &HELIX,    &SINUS,         &ATOMS,        &ARROWS,
        &MARIO,     &PLASMA,   &TWINKEL_WHITE, &TWINKEL_MULTI};
-  if (endless && (index < sizeof(jump_table) / sizeof(void *))) {
-    jump_table[index](true);
+  if (changed && (index < sizeof(jump_table) / sizeof(void *))) {
+    jump_table[index](0);
   } else {
     if (animation_sequence >= sizeof(jump_table) / sizeof(void *)) {
       animation_sequence = 0;
     }
-    jump_table[animation_sequence++](false);
+    jump_table[animation_sequence++](1);
   }
 }

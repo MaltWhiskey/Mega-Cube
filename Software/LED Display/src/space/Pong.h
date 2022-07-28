@@ -87,7 +87,7 @@ class Pad {
         velocity.x = sinf(2 * PI * 45 / 360 * dx);
         velocity.y = cosf(2 * PI * 45 / 360 * dy);
         velocity.z = -velocity.z * 1.5f;
-        velocity.normalize() * 2.0f;
+        velocity.normalize() * 2.3f;
       };
     }
   }

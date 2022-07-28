@@ -15,10 +15,11 @@ class Display {
   static const uint8_t width = 16;
   static const uint8_t height = 16;
   static const uint8_t depth = 16;
-  static Color cube[width][height][depth];
 
- private:
-  static Color buff[width][height][depth];
+  // Buffer currently being used for drawing
+  static uint32_t cubeBuffer;
+  // Create two cube buffers for motion blurring
+  static Color cube[2][width][height][depth];
 
  private:
   // Special display effect for all animations
@@ -36,7 +37,8 @@ class Display {
   static const uint8_t BCK = 10;
 
  private:
-  // Hardware setup for PLL, FLEXIO and DMA
+  // Hardware setup for RAM, PLL, FLEXIO and DMA
+  static void setupRAM();
   static void setupPLL();
   static void setupFIO();
   static void setupDMA();

@@ -25,7 +25,7 @@ struct Config {
     } server;
   } network;
   struct {
-    boolean endless = false;
+    boolean changed = false;
     uint8_t animation = 0;
     struct {
       float timer_duration = 30.0f;

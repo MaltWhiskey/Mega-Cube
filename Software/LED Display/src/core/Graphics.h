@@ -9,44 +9,44 @@
 #include "power/Math3D.h"
 
 // Set voxel using physical cube coordinates
-static inline void voxel(const uint8_t x, const uint8_t y, const uint8_t z,
-                         const Color &c) {
+inline void voxel(const uint8_t x, const uint8_t y, const uint8_t z,
+                  const Color &c) {
   if (((x | y | z) & 0xF0) == 0) {
-    Display::cube[x][y][z] = c;
+    Display::cube[Display::cubeBuffer][x][y][z] = c;
   }
 }
 
 // Set voxel using system coordinates (translates to physical cube coordinates)
 // Has correction for Vector3(7.5f, 7.5f, 7.5f) build in independent of v1
-static inline void voxel(const Vector3 &v0, const Color &c,
-                         const Vector3 &v1 = Vector3(0, 0, 0)) {
+inline void voxel(const Vector3 &v0, const Color &c,
+                  const Vector3 &v1 = Vector3(0, 0, 0)) {
   Vector3 v = v1 + v0;
   // Translate and round to nearest integer
   int16_t x = (int16_t)(v.x + 32768) - 32760;
   int16_t y = (int16_t)(v.y + 32768) - 32760;
   int16_t z = (int16_t)(v.z + 32768) - 32760;
   if (((x | y | z) & 0xFFF0) == 0) {
-    Display::cube[x][y][z] = c;
+    Display::cube[Display::cubeBuffer][x][y][z] = c;
   }
 }
 
 // Set voxel using system coordinates (translates to physical cube coordinates)
 // Has correction for Vector3(7.5f, 7.5f, 7.5f) build in independent of v1
-static inline void voxel_add(const Vector3 &v0, const Color &c,
-                             const Vector3 &v1 = Vector3(0, 0, 0)) {
+inline void voxel_add(const Vector3 &v0, const Color &c,
+                      const Vector3 &v1 = Vector3(0, 0, 0)) {
   Vector3 v = v1 + v0;
   // Translate and round to nearest integer
   int16_t x = (int16_t)(v.x + 32768) - 32760;
   int16_t y = (int16_t)(v.y + 32768) - 32760;
   int16_t z = (int16_t)(v.z + 32768) - 32760;
   if (((x | y | z) & 0xFFF0) == 0) {
-    Display::cube[x][y][z] += c;
+    Display::cube[Display::cubeBuffer][x][y][z] += c;
   }
 }
 
 // Set voxel using system coordinates (translates to physical cube coordinates)
-static inline void radiate4(const Vector3 &v0, const Color &c, const float r,
-                            const Vector3 &v1 = Vector3(7.5f, 7.5f, 7.5f)) {
+inline void radiate4(const Vector3 &v0, const Color &c, const float r,
+                     const Vector3 &v1 = Vector3(7.5f, 7.5f, 7.5f)) {
   Vector3 v = v1 + v0;
   // Round lower bounds down and round higher bounds up
   int16_t x1 = (int16_t)(v.x - r + 32768) - 32767;
@@ -63,15 +63,15 @@ static inline void radiate4(const Vector3 &v0, const Color &c, const float r,
           float radius = (Vector3(x, y, z) - v).magnitude();
           // Scale color proportional to 1 / (1 + r^4)
           if (radius < r) {
-            Display::cube[x][y][z].maximize(
+            Display::cube[Display::cubeBuffer][x][y][z].maximize(
                 c.scaled(255 / (1 + (radius * radius * radius * radius))));
           }
         }
       }
 }
 // Set voxel using system coordinates (translates to physical cube coordinates)
-static inline void radiate5(const Vector3 &v0, const Color &c, const float r,
-                            const Vector3 &v1 = Vector3(7.5f, 7.5f, 7.5f)) {
+inline void radiate5(const Vector3 &v0, const Color &c, const float r,
+                     const Vector3 &v1 = Vector3(7.5f, 7.5f, 7.5f)) {
   Vector3 v = v1 + v0;
   // Round lower bounds down and round higher bounds up
   int16_t x1 = (int16_t)(v.x - r + 32768) - 32767;
@@ -88,7 +88,7 @@ static inline void radiate5(const Vector3 &v0, const Color &c, const float r,
           float radius = (Vector3(x, y, z) - v).magnitude();
           // Scale color proportional to 1 / (1 + r^5)
           if (radius < r) {
-            Display::cube[x][y][z].maximize(c.scaled(
+            Display::cube[Display::cubeBuffer][x][y][z].maximize(c.scaled(
                 255 / (1 + (radius * radius * radius * radius * radius))));
           }
         }
@@ -96,8 +96,8 @@ static inline void radiate5(const Vector3 &v0, const Color &c, const float r,
 }
 
 // Set voxel using system coordinates (translates to physical cube coordinates)
-static inline void radiate(const Vector3 &v0, const Color &c, const float r,
-                           const Vector3 &v1 = Vector3(7.5f, 7.5f, 7.5f)) {
+inline void radiate(const Vector3 &v0, const Color &c, const float r,
+                    const Vector3 &v1 = Vector3(7.5f, 7.5f, 7.5f)) {
   Vector3 v = v1 + v0;
   // Round lower bounds down and round higher bounds up
   int16_t x1 = (int16_t)(v.x - r + 32768) - 32767;
@@ -114,13 +114,14 @@ static inline void radiate(const Vector3 &v0, const Color &c, const float r,
           float radius = (Vector3(x, y, z) - v).magnitude();
           // Scale color proportional to distance
           if (radius < r) {
-            Display::cube[x][y][z].maximize(c.scaled(255 * (1 - (radius / r))));
+            Display::cube[Display::cubeBuffer][x][y][z].maximize(
+                c.scaled(255 * (1 - (radius / r))));
           }
         }
       }
 }
 // Draw a line through the center of the cube with direction n
-static inline void line(Vector3 n) {
+inline void line(Vector3 n) {
   // Get the normal vector n hat.
   n.normalize();
   // Multiply by the diagonal corner to corner distance
@@ -136,5 +137,5 @@ static inline void line(Vector3 n) {
   }
 }
 
-static inline void setMotionBlur(uint8_t n) { Display::setMotionBlur(n); }
+inline void setMotionBlur(uint8_t n) { Display::setMotionBlur(n); }
 #endif

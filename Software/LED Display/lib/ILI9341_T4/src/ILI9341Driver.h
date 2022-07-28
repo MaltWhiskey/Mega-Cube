@@ -1480,12 +1480,14 @@ private:
     // called when doing partial diff redraw
     void _spiInterrupt_software() ILI9341_T4_ALWAYS_INLINE
         {
-        //noInterrupts();        // UNNEEDED ?
         _toggle(_dcport, _dcpinmask);
+        _pimxrt_spi->SR = 0x3f00; //Reset All flags and errors    
         if (_spi_int_phase >= 0)
             {            
+            noInterrupts(); // needed !  
             _pimxrt_spi->TDR = _spi_int_command[_spi_int_phase];
             _pimxrt_spi->TCR = (_spi_int_phase & 1) ? (_dma_spi_tcr_assert) : (_dma_spi_tcr_deassert);
+            interrupts();  
             _spi_int_phase--;
             }
         else
@@ -1493,9 +1495,7 @@ private:
             _pimxrt_spi->IER = 0; // disable interrupt            
             _dmatx.enable();
             }
-        _pimxrt_spi->SR = 0x3f00; //Reset All flags and errors    
         asm("dsb");
-        //interrupts();        // UNNEEDED ?
         }
 
 

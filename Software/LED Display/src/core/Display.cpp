@@ -1,27 +1,37 @@
 #include "Display.h"
 
 #include <Arduino.h>
+
 /*------------------------------------------------------------------------------
  * DISPLAY CLASS
  *----------------------------------------------------------------------------*/
 volatile uint8_t Display::dmaBuffer = 0;
 volatile boolean Display::displayAvailable = true;
-uint32_t Display::dmaBufferData[2][BITCOUNT * LEDCOUNT] = {};
-uint32_t Display::dmaBufferHigh[1] = {0xFFFFFFFF};
-uint32_t Display::dmaBufferLow[50] = {};
+DMAMEM uint32_t Display::dmaBufferData[2][BITCOUNT * LEDCOUNT] = {};
+DMAMEM uint32_t Display::dmaBufferHigh[1] = {0xFFFFFFFF};
+DMAMEM uint32_t Display::dmaBufferLow[50] = {};
 DMAChannel Display::dmaChannel[2];
 DMASetting Display::dmaSetting[6];
 uint8_t Display::motionBlur = 240;
 uint8_t Display::brightness = 255;
-Color Display::cube[width][height][depth];
-Color Display::buff[width][height][depth];
+uint32_t Display::cubeBuffer = 0;
+DMAMEM Color Display::cube[2][width][height][depth];
 
 void Display::begin() {
+  setupRAM();
   setupPLL();
   setupFIO();
   setupDMA();
 }
 
+// DMAMEM can't be (static) initialized, need to do this in code
+void Display::setupRAM(void) {
+  memset(dmaBufferData, 0, sizeof(dmaBufferData));
+  memset(dmaBufferHigh, -1, sizeof(dmaBufferHigh));
+  memset(dmaBufferLow, 0, sizeof(dmaBufferLow));
+  memset(cube, 0, sizeof(cube));
+  arm_dcache_flush(dmaBufferData, sizeof(dmaBufferData));
+}
 // Triggered after all led data is sent but before reset/latch
 void Display::displayReady(void) {
   // First clear the interrupt flag to avoid retriggering
@@ -30,6 +40,8 @@ void Display::displayReady(void) {
   if (!displayAvailable) {
     // The prep buffer becomes the dma buffer and visa versa
     dmaBuffer = 1 - dmaBuffer;
+    // Write cached data to memory before dma transfer (DMAMEM)
+    arm_dcache_flush(dmaBufferData[dmaBuffer], sizeof(dmaBufferData[0]));
     dmaSetting[0].sourceBuffer(dmaBufferData[dmaBuffer],
                                sizeof(dmaBufferData[0]));
     dmaSetting[4].sourceBuffer(dmaBufferData[dmaBuffer],
@@ -60,8 +72,8 @@ void Display::update() {
           led = 0x7F - led;
           uint32_t *offset = prepBuffer + led * BITCOUNT;
           uint8_t chn = (x >> 1 & 0x0E) + (z << 1 & 0xF8) + (z >> 1 & 1);
-          uint32_t value = cube[x][y][z]
-                               .blend(motionBlur, buff[x][y][z])
+          uint32_t value = cube[cubeBuffer][x][y][z]
+                               .blend(motionBlur, cube[1 - cubeBuffer][x][y][z])
                                .scale(brightness)
                                .bits();
           value = (value << (1 + chn)) | (value >> (31 - chn));
@@ -73,6 +85,7 @@ void Display::update() {
         }
       }
     }
+    cubeBuffer = 1 - cubeBuffer;
     // Writing to the cube data is not allowed to prevent frame tearing
     displayAvailable = false;
   }
@@ -80,11 +93,7 @@ void Display::update() {
 // Check if the display is available to accept new cube data
 bool Display::available() { return displayAvailable; }
 // Clear the cube so a new frame can be freshly created.
-void Display::clear() {
-  // Quick hack to swap cube data to buffer data
-  memcpy(buff, cube, sizeof(cube));
-  memset(cube, 0, sizeof(cube));
-}
+void Display::clear() { memset(cube[cubeBuffer], 0, sizeof(cube[0])); }
 // Set the master display brightness value
 void Display::setBrightness(const uint8_t value) {  //
   brightness = value;

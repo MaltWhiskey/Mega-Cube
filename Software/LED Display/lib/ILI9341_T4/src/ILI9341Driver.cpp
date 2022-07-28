@@ -1564,11 +1564,11 @@ namespace ILI9341_T4
             _pimxrt_spi->SR = 0x3f00;
 
             // interrupt after each frame
+            noInterrupts();
             _pimxrt_spi->IER = LPSPI_IER_WCIE;  
-
             _pimxrt_spi->TDR = _spi_int_command[_spi_int_phase--]; // send the first command
             _pimxrt_spi->TCR = _dma_spi_tcr_deassert; // and then back to frame(15)
-
+            interrupts();
             // now we wait for the interrupt before toogling DC and sending the next frame... 
             }
         return;
