@@ -12,6 +12,7 @@ void Timer::operator=(const float alarm) {
   m_startTime = m_currentTime;
   m_lastTime = m_currentTime;
 }
+void Timer::restart() { operator=(m_alarmTime); }
 unsigned long Timer::update() {
   m_currentTime = micros();
   m_deltaTime = m_currentTime - m_lastTime;
@@ -26,12 +27,16 @@ unsigned long Timer::update() {
   }
   return 0;
 }
-float Timer::dt() const { return m_deltaTime / 1000000.0f; }
-float Timer::rt() const { return m_runTime / 1000000.0f; }
-float Timer::percent() const {
+float Timer::ratio() {
+  m_currentTime = micros();
+  m_deltaTime = m_currentTime - m_lastTime;
+  m_runTime = m_currentTime - m_startTime;
+  m_lastTime = m_currentTime;
   if (m_alarmTime > 0) {
     float threshold = m_runTime / (m_alarmTime * 1000000.0f);
     return threshold;
   }
   return 0;
 }
+float Timer::dt() const { return m_deltaTime / 1000000.0f; }
+float Timer::rt() const { return m_runTime / 1000000.0f; }

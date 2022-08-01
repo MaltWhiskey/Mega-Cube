@@ -39,9 +39,18 @@ extern lv_obj_t * ui_Label9;
 extern lv_obj_t * ui_Button10;
 extern lv_obj_t * ui_Label10;
 extern lv_obj_t * ui_Screen3;
+extern lv_obj_t * ui_Panel2;
+extern lv_obj_t * ui_Button11;
+extern lv_obj_t * ui_Label11;
+extern lv_obj_t * ui_Panel1;
+extern lv_obj_t * ui_Button12;
+extern lv_obj_t * ui_Label12;
+extern lv_obj_t * ui_Panel3;
+extern lv_obj_t * ui_Button13;
+extern lv_obj_t * ui_Label13;
+extern lv_obj_t * ui_Panel4;
 extern lv_obj_t * ui_Button14;
 extern lv_obj_t * ui_Label14;
-extern lv_obj_t * ui_Slider1;
 
 void EVENT_ARROWS(lv_event_t * e);
 void EVENT_FIREWORKS(lv_event_t * e);
@@ -49,9 +58,8 @@ void EVENT_ATOMS(lv_event_t * e);
 void EVENT_ARROWS(lv_event_t * e);
 void EVENT_FIREWORKS(lv_event_t * e);
 void EVENT_ATOMS(lv_event_t * e);
-void EVENT_SLIDER_CHG(lv_event_t * e);
 
-LV_IMG_DECLARE(ui_img_helix_png);    // assets/Helix.png
+LV_IMG_DECLARE(ui_img_helix_80_png);    // assets/Helix_80.png
 
 
 

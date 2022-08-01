@@ -6,9 +6,8 @@
 
 class Life : public Animation {
  private:
-  Timer timer_duration;
   float time_phase;
-  float time_fading;
+  float time_interval;
 
   uint16_t cells_g1[16][16];
   uint16_t cells_g2[16][16];
@@ -18,12 +17,13 @@ class Life : public Animation {
   // Hash list containing the hashes of past generations
   uint32_t hash_list[256];
   // Amount of hashes available and position to store new  hash in
-  uint8_t hash_nr;
-
+  uint32_t hash_nr;
   // The amount of living cells in the new generation
   uint16_t living = 0;
   // Sequence for generate different rules and start conditions
   uint8_t sequence = 0;
+
+  static constexpr auto &settings = config.animation.life;
 
  public:
   template <typename T, size_t size_z, size_t size_y>
@@ -182,48 +182,47 @@ class Life : public Animation {
       // isn't deterministic, but there is only a tiny chance of the same
       // hash with different generations.
       uint8_t matches = 0;
-      for (uint8_t i = 0; i < hash_nr; i++)
+      for (uint8_t i = 0; i < hash_nr && i <= 255; i++)
         if (hash_list[i] == hash) matches++;
       // Show only 1 cycles of custom gliders in life 4444
       if (sequence - 1 == 0 && matches >= 1) {
         game_rule_reset();
         game_next_generation();
       }
-      // Allow maximum of 6 cycles of same generation (hashes)
-      // Allow maximum 254 generations and no more than 500 living cells
-      else if (matches >= 6 || hash_nr == 255 || living >= 500) {
+      // Allow maximum 6 duplicate hashes and no more than 500 living cells
+      else if (matches >= 6 || living >= 500) {
         game_rule_reset();
         game_next_generation();
-      } else
-        hash_list[hash_nr++] = hash;
-    /*
-    Serial.printf("sequence = %d, matches = %d, hash_nr = %d, living = %d\n",
-                  sequence, matches, hash_nr, living);
-    */}
+      } else {
+        hash_list[hash_nr++ & 0xFF] = hash;
+      }
+    }
   }
 
-  void init(float duration, float fading) {
+  void init() {
     state = state_t::RUNNING;
-    timer_duration = duration;
-    time_fading = fading;
-    time_phase = fading * 2;
+    timer_running = settings.runtime;
+    time_interval = settings.interval;
+    time_phase = time_interval * 2;
     game_reset();
   }
 
   void draw(float dt) {
     setMotionBlur(config.animation.life.motionBlur);
-    if (timer_duration.update()) {
+    uint8_t brightness = settings.brightness;
+
+    if (timer_running.update()) {
       state = state_t::ENDING;
     }
 
     time_phase += dt;
     float scale = 0;
     uint8_t index = 0;
-    if (time_phase <= time_fading) {
-      scale = 255 * time_phase / time_fading;
-    } else if (time_phase <= 2 * time_fading) {
+    if (time_phase <= time_interval) {
+      scale = 255 * time_phase / time_interval;
+    } else if (time_phase <= 2 * time_interval) {
       index = 1;
-      scale = 255 * (time_phase - time_fading) / time_fading;
+      scale = 255 * (time_phase - time_interval) / time_interval;
     } else {
       time_phase = 0.0f;
       if (state != state_t::ENDING)
@@ -264,7 +263,7 @@ class Life : public Animation {
             i += 4;
           else
             continue;
-          voxel(x, y, z, colors[i].scaled(200));
+          voxel(x, y, z, colors[i].scaled(brightness));
         }
       }
   }

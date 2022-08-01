@@ -67,13 +67,12 @@ void execute(const char* char_buffer) {
     config.hid.button.a = doc["a"];
     config.hid.button.b = doc["b"];
     config.hid.button.c = doc["c"];
-    config.hid.button.updated = micros();
   } else if (event.equals("fft")) {
     String msg = doc["data"];
     for (uint16_t i = 0; i < msg.length(); i++) {
       char c = msg.charAt(i) - 'A';
       config.hid.fft.data[i] = (uint8_t)c;
-      config.hid.fft.updated = micros();
+      config.hid.fft.updated = true;
     }
   } else if (event.equals("time")) {
     Serial.println(char_buffer);
@@ -83,7 +82,6 @@ void execute(const char* char_buffer) {
     config.hid.accelerometer.x = doc["x"];
     config.hid.accelerometer.y = doc["y"];
     config.hid.accelerometer.z = doc["z"];
-    config.hid.accelerometer.updated = micros();
   }
 }
 

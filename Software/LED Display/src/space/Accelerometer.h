@@ -5,24 +5,22 @@
 #include "Power/Math8.h"
 
 class Accelerometer : public Animation {
- private:
-  Timer timer_duration;
-
  public:
-  void init(float duration) {
-    state = state_t::STARTING;
-    timer_duration = duration;
+  static constexpr auto &settings = config.animation.accelerometer;
+
+  void init() {
+    state = state_t::RUNNING;
+    timer_running = settings.runtime;
   }
 
   void draw(float dt) {
-    setMotionBlur(config.animation.accelerometer.motionBlur);
-    if (timer_duration.update()) {
+    if (timer_running.update()) {
       state = state_t::INACTIVE;
     }
 
-    Vector3 v = Vector3(config.hid.accelerometer.x, config.hid.accelerometer.z,
-                        config.hid.accelerometer.y)
-                    .normalized();
+    setMotionBlur(settings.motionBlur);
+    auto &hid = config.hid.accelerometer;
+    Vector3 v = Vector3(hid.x, hid.z, hid.y).normalized();
     Quaternion ortho = Quaternion(90, Vector3::Y) * Quaternion(180, Vector3::X);
     line(ortho.rotate(v));
 

@@ -7,18 +7,23 @@ class Starfield : public Animation {
  private:
   float phase;
   float phase_speed;
-  int16_t hue_speed;
-
-  Timer timer;
-  float time_duration;
-  float time_fade_out;
 
   static const int numStars = 200;
   Vector3 stars[numStars];
   bool initialized = false;
 
+  static constexpr auto &settings = config.animation.starfield;
+
  public:
-  void init(float fade_in, float duration, float fade_out) {
+  void init() {
+    state = state_t::STARTING;
+    timer_starting = settings.starttime;
+    timer_running = settings.runtime;
+    timer_ending = settings.endtime;
+    phase_speed = settings.phase_speed;
+    hue16_speed = settings.hue_speed * 255;
+    phase = 0;
+
     if (!initialized) {
       for (int i = 0; i < numStars; i++) {
         stars[i] = Vector3(noise.nextRandom(-1, 1), noise.nextRandom(-1, 1),
@@ -26,52 +31,35 @@ class Starfield : public Animation {
       }
       initialized = true;
     }
-    phase = 0.0f;
-    state = state_t::STARTING;
-    timer = fade_in;
-    time_duration = duration;
-    time_fade_out = fade_out;
-  }
-
-  void speed(float phase_speed_, int16_t hue_speed_) {
-    phase_speed = phase_speed_;
-    hue_speed = hue_speed_;
-  }
-
-  void end() {
-    if (state == state_t::RUNNING) {
-      state = state_t::ENDING;
-      timer = time_fade_out;
-    }
   }
 
   void draw(float dt) {
-    setMotionBlur(config.animation.starfield.motionBlur);
-    phase += phase_speed * dt;
-    hue16 += (int16_t)(255 * hue_speed * dt);
+    setMotionBlur(settings.motionBlur);
+    uint8_t brightness = settings.brightness;
+    phase += dt * phase_speed;
+    hue16 += dt * hue16_speed;
 
-    uint8_t scale = 0;
-    if (state == state_t::ENDING) {
-      if (timer.update()) {
-        state = state_t::INACTIVE;
-        scale = 0;
-      } else
-        scale = (1 - timer.percent()) * 255;
+    if (state == state_t::STARTING) {
+      if (timer_starting.update()) {
+        state = state_t::RUNNING;
+        timer_running.restart();
+      } else {
+        brightness *= timer_starting.ratio();
+      }
     }
     if (state == state_t::RUNNING) {
-      if (timer.update()) {
+      if (timer_running.update()) {
         state = state_t::ENDING;
-        timer = time_fade_out;
+        timer_ending.restart();
       }
-      scale = 255;
     }
-    if (state == state_t::STARTING) {
-      if (timer.update()) {
-        state = state_t::RUNNING;
-        timer = time_duration;
-        scale = 255;
-      } else
-        scale = timer.percent() * 255;
+    if (state == state_t::ENDING) {
+      if (timer_ending.update()) {
+        state = state_t::INACTIVE;
+        brightness = 0;
+      } else {
+        brightness *= (1 - timer_ending.ratio());
+      }
     }
 
     Quaternion q = Quaternion(000.0f * phase, Vector3(0, 1, 0));
@@ -84,9 +72,9 @@ class Starfield : public Animation {
       } else if (stars[i].z < -1) {
         stars[i] = Vector3(noise.nextRandom(-1, 1), noise.nextRandom(-1, 1), 1);
       }
-      Color c = Color((hue16 >> 8) + r * 6, RainbowGradientPalette);
+      Color c = Color((hue16 >> 8) + (int8_t)(r * 6), RainbowGradientPalette);
       // Multiply by sqrt(3) * radius = 12.99 => 13
-      voxel(q.rotate(stars[i]) * 13.0f, c.scale(scale));
+      voxel(q.rotate(stars[i]) * 13.0f, c.scale(brightness));
     }
   }
 };

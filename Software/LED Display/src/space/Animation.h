@@ -21,34 +21,56 @@ enum class state_t : uint8_t {
   ENDING = 3
 };
 
+class Animation;
+
+// Jump item configuration
+struct jump_item_t {
+  String name;
+  String description;
+  void (*custom_init)();
+  Animation *object;
+};
+
 class Animation {
  private:
   // Timer used to make rendering frequency independent
   static Timer animation_timer;
   // Position in the sequence table
   static uint16_t animation_sequence;
+  // Settings of animations
+  static constexpr auto &settings = config.animation;
 
  public:
-  // Shared noise object
+  // Shared Noise Object
   static Noise noise;
+  // Amount of (aprox) time this animation keeps running
+  Timer timer_starting;
+  Timer timer_running;
+  Timer timer_ending;
   // Postition in color palette << 8 for more resolution
-  uint16_t hue16 = 0;
-  // Animation is active and drawn on the display
+  int16_t hue16;
+  int16_t hue16_speed;
+  // Animation brightness
+  uint8_t brightness;
+  // When animation is not inactive draw this on the display
   state_t state = state_t::INACTIVE;
 
- public:
   virtual ~Animation(){};
   // Start displaying animations
   static void begin();
   // Animate all active animations
-  static void animate();
+  static void loop();
   // Select next animation from sequence or a specific one
-  static void next(boolean endless = false, uint8_t index = 0);
+  static void next(boolean changed = false, uint16_t index = 0);
   // Get current fps
   static float fps();
   // Draws antimation frame respecting elapsed time
   virtual void draw(float dt) = 0;
-  // End animation gracefully
+  // End animation gracefully (may be overriden)
   virtual void end();
+  // Initialization of animation with configuration
+  virtual void init() = 0;
+  // Get animation jump_items_t (returns 0 when above index)
+  static jump_item_t get_item(uint16_t index);
 };
 #endif

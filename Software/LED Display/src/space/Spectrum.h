@@ -5,14 +5,15 @@
 
 class Spectrum : public Animation {
  private:
-  Timer timer_duration;
   float amplitude[64] = {0};
-  int16_t hue_speed;
   uint8_t rx, ry, rz;
   float time_phase = 0;
   float time_fading = 2.0f;
-  float fft_updated = 0;
-  float button_updated = 0;
+  bool btn_A = false;
+  bool btn_B = false;
+  bool btn_C = false;
+
+  static constexpr auto &settings = config.animation.spectrum;
 
  public:
   void rotate_voxel(Color c, uint8_t x, uint8_t y, uint8_t z) {
@@ -36,27 +37,36 @@ class Spectrum : public Animation {
     voxel(x, y, z, c.scale((1 - (time_phase / time_fading)) * 255));
   }
 
-  void init(float duration, uint16_t hue_speed_) {
-    timer_duration = duration;
-    hue_speed = hue_speed_;
+  void init() {
     state = state_t::RUNNING;
-    time_phase = 0;
-    time_fading = 2.0f;
+    timer_running = settings.runtime;
+    hue16_speed = settings.hue_speed * 255;
   }
 
   void draw(float dt) {
-    setMotionBlur(config.animation.spectrum.motionBlur);
-    hue16 += (int16_t)(255 * hue_speed * dt);
-    if (config.hid.button.updated != button_updated) {
-      button_updated = config.hid.button.updated;
-      if (config.hid.button.a) rx = (rx + 1) & 3;
-      if (config.hid.button.b) ry = (ry + 1) & 3;
-      if (config.hid.button.c) rz = (rz + 1) & 3;
+    setMotionBlur(settings.motionBlur);
+    uint8_t brightness = settings.brightness;
+    hue16 += dt * hue16_speed;
+
+    auto &hid = config.hid.button;
+    if (btn_A != hid.a) {
+      btn_A = hid.a;
+      rx = (rx + 1) & 3;
     }
-    if (config.hid.fft.updated != fft_updated) {
-      fft_updated = config.hid.fft.updated;
+    if (btn_B != hid.b) {
+      btn_B = hid.b;
+      ry = (ry + 1) & 3;
+    }
+    if (btn_C != hid.c) {
+      btn_C = hid.c;
+      rz = (rz + 1) & 3;
+    }
+
+    auto &fft = config.hid.fft;
+    if (fft.updated) {
+      fft.updated = false;
       for (uint8_t i = 0; i < 64; i++) {
-        uint8_t a = config.hid.fft.data[i] & 0x0F;
+        uint8_t a = fft.data[i] & 0x0F;
         if (a > amplitude[i]) {
           amplitude[i] = a;
         }
@@ -72,14 +82,14 @@ class Spectrum : public Animation {
       for (uint8_t y = 0; y <= a; y++) {
         Color c = Color(y * 15 + x * 2 + 10, LavaPalette);
         Color d = Color((hue16 >> 8) + x * 5 + z * 5, RainbowGradientPalette);
-        c = Color(25, c, d);
-        rotate_voxel(c, x, y, z);
-        rotate_voxel(c, x, y, z + 1);
-        rotate_voxel(c, x + 1, y, z);
-        rotate_voxel(c, x + 1, y, z + 1);
+        Color e = Color(25, c, d).scale(brightness);
+        rotate_voxel(e, x, y, z);
+        rotate_voxel(e, x, y, z + 1);
+        rotate_voxel(e, x + 1, y, z);
+        rotate_voxel(e, x + 1, y, z + 1);
       }
     }
-    if (timer_duration.update()) {
+    if (timer_running.update()) {
       state = state_t::ENDING;
     }
     if (state == state_t::ENDING) {

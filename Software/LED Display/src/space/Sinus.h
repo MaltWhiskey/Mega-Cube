@@ -10,84 +10,74 @@ class Sinus : public Animation {
   float z_min = -2;
   float z_max = 2;
 
-  float phase = 0.0f;
-  float phase_speed = 0.0f;
-  int16_t hue_speed = 0;
-
-  Timer timer;
-  float time_duration;
-  float time_fade_out;
   float radius;
+  float resolution;
+  float phase;
+  float phase_speed;
+
+  static constexpr auto &settings = config.animation.sinus;
 
  public:
-  void init(float fade_in, float duration, float fade_out, float radius_) {
+  void init() {
     state = state_t::STARTING;
-    timer = fade_in;
+    timer_starting = settings.starttime;
+    timer_running = settings.runtime;
+    timer_ending = settings.endtime;
+    resolution = settings.resolution;
+    hue16_speed = settings.hue_speed * 255;
+    radius = settings.radius;
 
-    phase = 0.0f;
-    time_duration = duration;
-    time_fade_out = fade_out;
-    radius = radius_;
-  }
-
-  void speed(float phase_speed_, int16_t hue_speed_) {
-    phase_speed = phase_speed_;
-    hue_speed = hue_speed_;
-  }
-
-  void end() {
-    if (state == state_t::RUNNING) {
-      state = state_t::ENDING;
-      timer = 2.0f;
-    }
+    phase = 0;
+    phase_speed = settings.phase_speed;
   }
 
   void draw(float dt) {
-    setMotionBlur(config.animation.sinus.motionBlur);
-    phase += phase_speed * dt;
-    hue16 += (int16_t)(255 * hue_speed * dt);
+    setMotionBlur(settings.motionBlur);
+    uint8_t brightness = settings.brightness;
+    phase += dt * phase_speed;
+    hue16 += dt * hue16_speed;
 
-    uint8_t scale = 0;
-    if (state == state_t::ENDING) {
-      if (timer.update()) {
-        state = state_t::INACTIVE;
-        scale = 0;
-      } else
-        scale = (1 - timer.percent()) * 255;
+    if (state == state_t::STARTING) {
+      if (timer_starting.update()) {
+        state = state_t::RUNNING;
+        timer_running.restart();
+      } else {
+        brightness *= timer_starting.ratio();
+      }
     }
     if (state == state_t::RUNNING) {
-      if (timer.update()) {
+      if (timer_running.update()) {
         state = state_t::ENDING;
-        timer = time_fade_out;
+        timer_ending.restart();
       }
-      scale = 255;
     }
-    if (state == state_t::STARTING) {
-      if (timer.update()) {
-        state = state_t::RUNNING;
-        timer = time_duration;
-        scale = 255;
-      } else
-        scale = timer.percent() * 255;
+    if (state == state_t::ENDING) {
+      if (timer_ending.update()) {
+        state = state_t::INACTIVE;
+        brightness = 0;
+      } else {
+        brightness *= (1 - timer_ending.ratio());
+      }
     }
 
     // Resize the function to be big enough to have the rotated version fit
     // sqrt(3) * 7.5 * 2 => 26 is big enough but more resolution is better
-    const float size = 30;
     Quaternion q = Quaternion(phase * 10.0f, Vector3(1, 1, 1));
-    for (uint16_t x = 0; x <= size; x++) {
+    for (uint16_t x = 0; x <= resolution; x++) {
       // convert cube x to floating point coordinate between x_min and x_max
-      float xprime = mapf(x, 0, size, x_min, x_max);
-      for (uint16_t z = 0; z <= size; z++) {
+      float xprime = mapf(x, 0, resolution, x_min, x_max);
+      for (uint16_t z = 0; z <= resolution; z++) {
         // convert cube z to floating point coordinate between z_min and z_max
-        float zprime = mapf(z, 0, size, z_min, z_max);
+        float zprime = mapf(z, 0, resolution, z_min, z_max);
         // determine y floating point coordinate
         float y = sinf(phase + sqrtf(xprime * xprime + zprime * zprime));
         // display voxel on the cube scaled back to radius fitting the cube
-        Vector3 point = Vector3(2 * (x / size) - 1, 2 * (z / size) - 1, y);
+        Vector3 point =
+            Vector3(2 * (x / resolution) - 1, 2 * (z / resolution) - 1, y);
         point = q.rotate(point) * radius;
-        Color c = Color((hue16 >> 8) + ((y + 1) * 64), RainbowGradientPalette);
-        radiate(point, c.scale(scale), 1.0f);
+        Color c =
+            Color((hue16 >> 8) + (int8_t)(y * 64), RainbowGradientPalette);
+        radiate(point, c.scale(brightness), 1.0f);
       }
     }
   }

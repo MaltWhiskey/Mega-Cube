@@ -17,10 +17,8 @@ class Pad {
 
   bool move(const float dt, uint8_t scale) {
     if (!exploded) {  // Exploded pads don't move
-      Vector3 v =
-          Vector3(config.hid.accelerometer.x, config.hid.accelerometer.z,
-                  config.hid.accelerometer.y)
-              .normalized();
+      auto& hid = config.hid.accelerometer;
+      Vector3 v = Vector3(hid.x, hid.z, hid.y).normalized();
 
       Quaternion front = Quaternion(-90, Vector3::X) *
                          Quaternion(90, Vector3::Y) *
@@ -144,55 +142,52 @@ class Pong : public Animation {
   Pad pad;
   Ball ball;
 
-  Timer timer_duration;
-  float time_fading;
-  float time_phase;
-  int16_t hue_speed;
+  static constexpr auto& settings = config.animation.pong;
 
  public:
-  void init(float duration, float fading, uint16_t hue_speed_) {
-    state = state_t::RUNNING;
-    timer_duration = duration;
-    time_phase = 0.0f;
-    time_fading = fading;
-    hue_speed = hue_speed_;
+  void init() {
+    state = state_t::STARTING;
+    timer_starting = settings.starttime;
+    timer_running = settings.runtime;
+    timer_ending = settings.endtime;
+    hue16_speed = settings.hue_speed * 255;
     pad.init();
     ball.init();
   }
 
-  void end() {
-    if (state == state_t::RUNNING) {
-      state = state_t::ENDING;
-      time_phase = time_fading;
-    }
-  }
-
   void draw(float dt) {
-    setMotionBlur(config.animation.pong.motionBlur);
-    hue16 += (int16_t)(255 * hue_speed * dt);
-    if (timer_duration.update()) {
-      state = state_t::ENDING;
-      time_phase = time_fading;
+    setMotionBlur(settings.motionBlur);
+    uint8_t brightness = settings.brightness;
+    hue16 += dt * hue16_speed;
+
+    if (state == state_t::STARTING) {
+      if (timer_starting.update()) {
+        state = state_t::RUNNING;
+        timer_running.restart();
+      } else {
+        brightness *= timer_starting.ratio();
+      }
+    }
+    if (state == state_t::RUNNING) {
+      if (timer_running.update()) {
+        state = state_t::ENDING;
+        timer_ending.restart();
+      }
     }
     if (state == state_t::ENDING) {
-      time_phase -= dt;
-      if (time_phase <= 0) {
-        time_phase = 0;
+      if (timer_ending.update()) {
         state = state_t::INACTIVE;
+        brightness = 0;
+      } else {
+        brightness *= (1 - timer_ending.ratio());
       }
-    } else {
-      time_phase += dt;
     }
-    float scale = 255;
-    if (time_phase <= time_fading) {
-      scale = 255 * time_phase / time_fading;
-    }
-    if (pad.move(dt, scale)) {
+
+    if (pad.move(dt, brightness)) {
       pad.init();
       ball.init();
-      time_phase = 0.0f;
     } else {
-      ball.move(dt, pad, scale, hue16 >> 8);
+      ball.move(dt, pad, brightness, hue16 >> 8);
     }
   }
 };

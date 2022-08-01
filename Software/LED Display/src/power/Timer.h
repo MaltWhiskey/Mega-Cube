@@ -11,9 +11,10 @@
  * Timer t = 0.10f;
  * Timer t = Timer(0.10f);
  *
+ * t.update();
  * Returns an integer of the times the timer has counted 0.10 seconds but only
- *if the next alarm threshold has passed since last call to update, otherwise
- *returns zero. t.update();
+ * if the next alarm threshold has passed since last call to update, otherwise
+ * returns zero.
  *----------------------------------------------------------------------------*/
 class Timer {
  public:
@@ -21,9 +22,10 @@ class Timer {
   Timer(const float alarm);
   void operator=(const float alarm);
   unsigned long update();
+  float ratio();
+  void restart();
   float dt() const;
   float rt() const;
-  float percent() const;
 
  private:
   // alarm time in seconds

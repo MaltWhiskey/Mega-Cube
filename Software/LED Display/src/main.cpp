@@ -1,16 +1,14 @@
 
 #include <Arduino.h>
 
-#include "Core/Config.h"
-#include "Core/LCD.h"
-#include "Space/animation.h"
+#include "core/Config.h"
 #include "core/ESP8266.h"
+#include "core/LCD.h"
+#include "space/animation.h"
 /*------------------------------------------------------------------------------
  * Globals
  *----------------------------------------------------------------------------*/
 Config config;
-extern void setup_lcd();
-extern void loop_lcd();
 /*------------------------------------------------------------------------------
  * Initialize setup parameters
  *----------------------------------------------------------------------------*/
@@ -32,18 +30,18 @@ void setup() {
   // Request time from Internet, the UART or Internet might fail
   // ESP8266::request_time();
   delay(3000);
-  setup_lcd();
+  LCD::begin();
 }
 /*------------------------------------------------------------------------------
  * Start the main loop
  *----------------------------------------------------------------------------*/
 void loop() {
   // Print FPS once every x seconds
-  static Timer print_interval = 0.01f;
+  static Timer print_interval = 10.0f;
 
-  Animation::animate();
+  Animation::loop();
   ESP8266::loop();
-  loop_lcd();
+  LCD::loop();
 
   if (print_interval.update()) {
     static char fps[20];

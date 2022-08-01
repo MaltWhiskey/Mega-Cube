@@ -6,66 +6,71 @@
 
 class Atoms : public Animation {
  private:
-  const static uint8_t ATOMS = 9;
-
   float angle;
-  float angular_speed;
-  uint16_t hue_speed;
-  float max_radius;
-  float start_radius = 0;
-  float start_angle = 0;
-  float radius;
+  float angle_speed;
 
-  Timer timer_duration;
-  float time_expansion;
-  float time_contraction;
+  float radius_start;
+  float radius_max;
+  float arc;
+
+  static constexpr auto &settings = config.animation.atoms;
 
  public:
-  void init(float duration, float expansion, float contraction,
-            float anglespeed, float radius_, uint16_t hue_speed_) {
+  void init() {
     state = state_t::STARTING;
-    timer_duration = duration;
-    angular_speed = anglespeed;
-    hue_speed = hue_speed_;
-    max_radius = radius_;
-    time_expansion = expansion;
-    time_contraction = contraction;
-    angle = start_angle;
-    radius = start_radius;
+    timer_starting = settings.starttime;
+    timer_running = settings.runtime;
+    timer_ending = settings.endtime;
+
+    angle_speed = settings.angle_speed;
+    hue16_speed = settings.hue_speed * 255;
+    radius_max = settings.radius;
+    radius_start = settings.radius_start;
+
+    angle = 0;
   }
 
   void draw(float dt) {
-    setMotionBlur(config.animation.atoms.motionBlur);
-    if (timer_duration.update()) {
-      state = state_t::ENDING;
-    }
+    setMotionBlur(settings.motionBlur);
+    uint8_t brightness = settings.brightness;
+    float radius = radius_max;
+
     if (state == state_t::STARTING) {
-      radius += dt * max_radius / time_expansion;
-      if (radius > max_radius) {
-        radius = max_radius;
+      if (timer_starting.update()) {
         state = state_t::RUNNING;
+        timer_running.restart();
+      } else {
+        brightness *= timer_starting.ratio();
+        radius *= timer_starting.ratio();
+      }
+    }
+    if (state == state_t::RUNNING) {
+      if (timer_running.update()) {
+        state = state_t::ENDING;
+        timer_ending.restart();
       }
     }
     if (state == state_t::ENDING) {
-      radius -= dt * max_radius / time_contraction;
-      if (radius < start_radius) {
-        radius = start_radius;
+      if (timer_ending.update()) {
         state = state_t::INACTIVE;
+        brightness = 0;
+      } else {
+        brightness *= (1 - timer_ending.ratio());
+        radius *= (1 - timer_ending.ratio());
       }
     }
-    uint8_t scale = 255;
-    float threshold = 0.4f;
-    float progress = (radius - start_radius) / max_radius;
-    if (progress < threshold) {
-      scale *= (progress * (1 / threshold));
+    if (radius < radius_start) {
+      radius = radius_start;
     }
 
-    angle += angular_speed * dt;
-    hue16 += (int16_t)(255 * hue_speed * dt);
+    angle += dt * angle_speed;
+    hue16 += dt * hue16_speed;
+    arc = 2 * (180 / M_PI) * asinf(0.5f / radius);
+
     float a = angle * 1.0f;
     float t = angle * 0.1f;
 
-    Quaternion axes[ATOMS] = {
+    Quaternion axes[] = {
         Quaternion(t, Vector3(+sinf(a / 95), +sinf(a / 75), -sinf(a / 95))),
         Quaternion(t, Vector3(+sinf(a / 90), -sinf(a / 85), -sinf(a / 95))),
         Quaternion(t, Vector3(-sinf(a / 94), +sinf(a / 80), -sinf(a / 75))),
@@ -77,21 +82,20 @@ class Atoms : public Animation {
         Quaternion(t, Vector3(-sinf(a / 99), +sinf(a / 70), +sinf(a / 80)))};
 
     // Use normalized vectors to limit radius to length 1
-    Vector3 atoms[ATOMS] = {Vector3(1, 0, 0),
-                            Vector3(0, 1, 0),
-                            Vector3(0, 0, 1),
-                            Vector3(-1, 0, 0),
-                            Vector3(0, -1, 0),
-                            Vector3(0, 0, -1),
-                            Vector3(1, 0, 1).normalize(),
-                            Vector3(1, 1, 0).normalize(),
-                            Vector3(0, 1, 1).normalize()};
+    Vector3 atoms[] = {Vector3(1, 0, 0),
+                       Vector3(0, 1, 0),
+                       Vector3(0, 0, 1),
+                       Vector3(-1, 0, 0),
+                       Vector3(0, -1, 0),
+                       Vector3(0, 0, -1),
+                       Vector3(1, 0, 1).normalize(),
+                       Vector3(1, 1, 0).normalize(),
+                       Vector3(0, 1, 1).normalize()};
 
-    for (uint8_t i = 0; i < ATOMS; i++) {
+    for (uint8_t i = 0; i < 9; i++) {
       Vector3 v = axes[i].rotate(atoms[i]) * radius;
       Color c = Color((hue16 >> 8) + (i * 8), RainbowGradientPalette);
-      radiate4(v, c.scale(scale), 4.0f);
-      // line(axes[i].v);
+      radiate4(v, c.scale(brightness), 4.0f);
     }
   }
 };

@@ -9,10 +9,16 @@
  *-------------------------------------------------------------------------------------*/
 class Plasma : public Animation {
  private:
-  Timer timer;
-  float time_duration;
-  float time_fade_out;
-  uint8_t brightness = 100;
+  // speed_offset is used to travel a 1d noise map and get the axis speeds
+  float speed_offset;
+  float speed_offset_speed;
+  // scale_p represents the distance between each pixel in the noise map
+  float scale_p;
+  // speed is how fast the movement is over the axis in the noise map
+  float speed_x;
+  float speed_y;
+  float speed_z;
+  float speed_w;
 
   // start somewhere in the noise map
   float noise_x = noise.nextRandom(0, 255);
@@ -21,60 +27,53 @@ class Plasma : public Animation {
   float noise_w = noise.nextRandom(0, 255);
   // Allocate noise memory
   uint8_t noise_map[Display::width][Display::height][Display::depth];
-  // speed_offset is used to travel a 1d noise map and get the axis speeds
-  float speed_offset = 0;
-  float speed_offset_speed = 0.02f;
-  // scale_p represents the distance between each pixel in the noise map
-  float scale_p = 0.13f;
-  // speed is how fast the movement is over the axis in the noise map
-  float speed_x = 1.2f;
-  float speed_y = 1.3f;
-  float speed_z = 1.4f;
-  float speed_w = 2.2f;
+
+  static constexpr auto &settings = config.animation.plasma;
 
  public:
-  void init(float fade_in, float duration, float fade_out) {
+  void init() {
     state = state_t::STARTING;
-    timer = fade_in;
-    time_duration = duration;
-    time_fade_out = fade_out;
-  }
-
-  void end() {
-    if (state == state_t::RUNNING) {
-      state = state_t::ENDING;
-      timer = 2.0f;
-    }
+    timer_starting = settings.starttime;
+    timer_running = settings.runtime;
+    timer_ending = settings.endtime;
+    scale_p = settings.scale_p;
+    speed_x = settings.speed_x;
+    speed_y = settings.speed_y;
+    speed_z = settings.speed_z;
+    speed_w = settings.speed_w;
+    speed_offset = 0;
+    speed_offset_speed = settings.speed_offset_speed;
   }
 
   void draw(float dt) {
-    setMotionBlur(config.animation.plasma.motionBlur);
-    uint8_t scale = 0;
-    if (state == state_t::ENDING) {
-      if (timer.update()) {
-        state = state_t::INACTIVE;
-        scale = 0;
-      } else
-        scale = (1 - timer.percent()) * 255;
+    setMotionBlur(settings.motionBlur);
+    uint8_t brightness = settings.brightness;
+
+    if (state == state_t::STARTING) {
+      if (timer_starting.update()) {
+        state = state_t::RUNNING;
+        timer_running.restart();
+      } else {
+        brightness *= timer_starting.ratio();
+      }
     }
     if (state == state_t::RUNNING) {
-      if (timer.update()) {
+      if (timer_running.update()) {
         state = state_t::ENDING;
-        timer = time_fade_out;
+        timer_ending.restart();
       }
-      scale = 255;
     }
-    if (state == state_t::STARTING) {
-      if (timer.update()) {
-        state = state_t::RUNNING;
-        timer = time_duration;
-        scale = 255;
-      } else
-        scale = timer.percent() * 255;
+    if (state == state_t::ENDING) {
+      if (timer_ending.update()) {
+        state = state_t::INACTIVE;
+        brightness = 0;
+      } else {
+        brightness *= (1 - timer_ending.ratio());
+      }
     }
     updateNoise(dt);
     makeNoise();
-    drawNoise(scale);
+    drawNoise(brightness);
   }
 
   // Create the 3D noise data matrix[][][]
@@ -93,7 +92,7 @@ class Plasma : public Animation {
   }
 
   // Draw the 3D noise data matrix[][][]
-  void drawNoise(uint8_t scale) {
+  void drawNoise(uint8_t brightness) {
     for (int x = 0; x < Display::width; x++) {
       for (int y = 0; y < Display::height; y++) {
         for (int z = 0; z < Display::depth; z++) {
@@ -103,7 +102,6 @@ class Plasma : public Animation {
           voxel(x, y, z,
                 Color((hue16 >> 8) + index, LavaPalette)
                     .scale(noise_map[y][x][z])
-                    .scale(scale)
                     .scale(brightness));
         }
       }
@@ -118,8 +116,6 @@ class Plasma : public Animation {
     speed_z = 2 * (noise.noise1(speed_offset + 100) - 0.5);    //  -1 to 1
     speed_w = 2 * (noise.noise1(speed_offset + 150) - 0.5);    //  -1 to 1
     scale_p = .15 + (noise.noise1(speed_offset + 200) / 6.6);  // .15 to .30
-
-    // hue16 += (int16_t)(255 * config.noise.hue_speed * dt);
 
     noise_x += speed_x * dt;
     noise_y += speed_y * dt;

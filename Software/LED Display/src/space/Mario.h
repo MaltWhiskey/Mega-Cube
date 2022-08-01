@@ -8,66 +8,73 @@
 class Mario : public Animation {
  private:
   float angle;
-  float angular_speed;
-  float max_radius;
-  float start_radius = 3;
-  float start_angle = 0;
-  float radius;
+  float angle_speed;
+
+  float radius_start;
+  float radius_max;
   float arc;
 
-  Timer timer_duration;
   Timer timer_interval;
-  float time_expansion;
-  float time_contraction;
 
   uint8_t frame = 0;
   uint8_t frame_display[6] = {0, 1, 2, 3, 2, 1};
 
+  static constexpr auto &settings = config.animation.mario;
+
  public:
-  void init(float duration, float expansion, float contraction, float interval,
-            float anglespeed, float radius_) {
+  void init() {
     state = state_t::STARTING;
-    timer_duration = duration;
-    timer_interval = interval;
-    angular_speed = anglespeed;
-    max_radius = radius_;
-    time_expansion = expansion;
-    time_contraction = contraction;
-    angle = start_angle;
-    radius = start_radius;
+    timer_starting = settings.starttime;
+    timer_running = settings.runtime;
+    timer_ending = settings.endtime;
+    timer_interval = settings.interval;
+
+    angle_speed = settings.angle_speed;
+    radius_max = settings.radius;
+    radius_start = settings.radius_start;
+
+    angle = 0;
   }
 
   void draw(float dt) {
-    setMotionBlur(config.animation.mario.motionBlur);
-    if (timer_duration.update()) {
-      state = state_t::ENDING;
-    }
+    setMotionBlur(settings.motionBlur);
+    uint8_t brightness = settings.brightness;
+
+    float radius = radius_max;
+
     if (state == state_t::STARTING) {
-      radius += dt * max_radius / time_expansion;
-      if (radius > max_radius) {
-        radius = max_radius;
+      if (timer_starting.update()) {
         state = state_t::RUNNING;
+        timer_running.restart();
+      } else {
+        brightness *= timer_starting.ratio();
+        radius *= timer_starting.ratio();
+      }
+    }
+    if (state == state_t::RUNNING) {
+      if (timer_running.update()) {
+        state = state_t::ENDING;
+        timer_ending.restart();
       }
     }
     if (state == state_t::ENDING) {
-      radius -= dt * max_radius / time_contraction;
-      if (radius < start_radius) {
-        radius = start_radius;
+      if (timer_ending.update()) {
         state = state_t::INACTIVE;
+        brightness = 0;
+      } else {
+        brightness *= (1 - timer_ending.ratio());
+        radius *= (1 - timer_ending.ratio());
       }
     }
+    if (radius < radius_start) {
+      radius = radius_start;
+    }
+
     if (timer_interval.update()) {
       if (++frame >= sizeof(frame_display)) frame = 0;
     }
 
-    uint8_t scale = 100;
-    float threshold = 0.4f;
-    float progress = (radius - start_radius) / max_radius;
-    if (progress < threshold) {
-      scale *= (progress * (1 / threshold));
-    }
-
-    angle += angular_speed * dt;
+    angle += dt * angle_speed;
     arc = 2 * (180 / M_PI) * asinf(0.5f / radius);
 
     for (uint8_t y = 0; y < 16; y++) {
@@ -79,7 +86,7 @@ class Mario : public Animation {
           if (c.isBlack())
             c = Color(0, 0, 0);
           else {
-            c.gamma().scale(scale);
+            c.gamma().scale(brightness);
           }
         }
         // Map to coordinates with center (0,0,0) scaled by radius

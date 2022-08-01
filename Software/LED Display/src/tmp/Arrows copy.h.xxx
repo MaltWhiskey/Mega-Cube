@@ -8,7 +8,9 @@ class Arrows : public Animation {
  private:
   float angle;
   float angle_speed;
+  float angle_start = 0;
 
+  float radius;
   float radius_start;
   float radius_max;
   float arc;
@@ -36,25 +38,29 @@ class Arrows : public Animation {
     timer_ending = settings.endtime;
 
     angle_speed = settings.angle_speed;
-    hue16_speed = settings.hue_speed * 255;
+    hue16_speed = settings.hue_speed;
     radius_max = settings.radius;
     radius_start = settings.radius_start;
 
-    angle = 0;
+    angle = angle_start;
   }
 
   void draw(float dt) {
     setMotionBlur(settings.motionBlur);
     uint8_t brightness = settings.brightness;
-    float radius = radius_max;
 
     if (state == state_t::STARTING) {
-      if (timer_starting.update()) {
+      float ratio = timer_starting.ratio();
+      radius = radius_max * ratio;
+      if (radius > radius_max) {
+        radius = radius_max;
         state = state_t::RUNNING;
         timer_running.restart();
       } else {
-        brightness *= timer_starting.ratio();
-        radius *= timer_starting.ratio();
+        brightness *= ratio;
+      }
+      if (radius < radius_start) {
+        radius = radius_start;
       }
     }
     if (state == state_t::RUNNING) {
@@ -64,20 +70,21 @@ class Arrows : public Animation {
       }
     }
     if (state == state_t::ENDING) {
-      if (timer_ending.update()) {
+      float ratio = (1 - timer_ending.ratio());
+      radius = radius_max * ratio;
+      if (radius < 0) {
         state = state_t::INACTIVE;
         brightness = 0;
       } else {
-        brightness *= (1 - timer_ending.ratio());
-        radius *= (1 - timer_ending.ratio());
+        brightness *= ratio;
       }
-    }
-    if (radius < radius_start) {
-      radius = radius_start;
+      if (radius < radius_start) {
+        radius = radius_start;
+      }
     }
 
     angle += dt * angle_speed;
-    hue16 += dt * hue16_speed;
+    hue16 += (int16_t)(dt * hue16_speed);
     arc = 2 * (180 / M_PI) * asinf(0.5f / radius);
 
     // Rotation arround arbitrary angle and axis to add some chaos

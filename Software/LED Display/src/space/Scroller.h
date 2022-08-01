@@ -7,23 +7,27 @@
 
 class Scroller : public Animation {
  private:
-  Timer timer_duration;
   float text_rotation;
   float text_rotation_speed;
-  String txt;
+  String text =
+      " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\xff";
+
+  static constexpr auto &settings = config.animation.scroller;
 
  public:
-  void init(float duration, float speed, String text) {
+  void init() {
     state = state_t::RUNNING;
-    timer_duration = duration;
-    text_rotation_speed = speed;
+    timer_running = settings.runtime;
     text_rotation = -95.0f;
-    txt = text;
+    text_rotation_speed = settings.rotation_speed;
   }
+  void set_text(String s) { text = s; }
 
   void draw(float dt) {
-    setMotionBlur(config.animation.scroller.motionBlur);
-    if (timer_duration.update()) {
+    setMotionBlur(settings.motionBlur);
+    uint8_t brightness = settings.brightness;
+
+    if (timer_running.update()) {
       state = state_t::ENDING;
     }
 
@@ -52,11 +56,11 @@ class Scroller : public Animation {
     //  Insert an amount of blank_lines after every character
     const uint16_t blank_lines = 1;
 
-    uint16_t text_lines = (CHARSET_FRAME_HEIGHT + blank_lines) * txt.length();
+    uint16_t text_lines = (CHARSET_FRAME_HEIGHT + blank_lines) * text.length();
     while (line_angle > -line_angle_adj) {
       uint16_t text_offset = pixel_line % text_lines;
       uint16_t t =
-          match_char(txt[text_offset / (CHARSET_FRAME_HEIGHT + blank_lines)]);
+          match_char(text[text_offset / (CHARSET_FRAME_HEIGHT + blank_lines)]);
       if (t == 0xffff) {
         if (line_angle > 90.0f) {
           text_rotation = -95.0f;
@@ -73,38 +77,24 @@ class Scroller : public Animation {
           uint32_t data = charset_data[t][y * CHARSET_FRAME_WIDTH + x];
           if (data & 0xff000000) {
             Color c = Color(data & 0xff, data >> 8 & 0xff, data >> 16 & 0xff);
-            // c = Color((hue16 >> 8) + y * 3 + x * 4, RainbowGradientPalette);
+            // c = Color((hue16 >> 8) + y * 3 + x * 4,
+            // RainbowGradientPalette);
             Vector3 pixel = q.rotate(Vector3(x / 15.0f, 0, -1) * 15.0f);
             // radiate(pixel, c, 1.0f, Vector3(0, 0, 15));
-            voxel(pixel, c.gamma(), Vector3(-7.5, -7.5, +7.5));
+            voxel(pixel, c.scale(brightness).gamma(),
+                  Vector3(-7.5, -7.5, +7.5));
           }
         }
       }
       line_angle -= line_angle_adj;
     }
-    hue16 += (int16_t)(255 * 20 * dt);
   }
 
   uint16_t match_char(uint16_t chr) {
-    if (chr >= ' ' && chr <= 'Z') return chr - ' ';
-    return 0xffff;
-    /*
-    char characters[] = "1234567890ABCDEFGHIJKLMNOPQRTSUVWXYZ ?'\"abcde";
-    for (uint16_t i = 0; i < sizeof(characters); i++)
-      if (chr == characters[i]) return i;
-    return 0xffff;
-    */
-    /*
-    char characters[] = "!\"'(),.1234:;?ABCDEFGHIJKLMNOPQRTSUVWXYZ";
-    for (uint16_t i = 0; i < sizeof(characters); i++)
-      if (chr == characters[i]) return i;
-    return 0xffff;*/
-    /*
-    char characters[] = "ABCDEFGHIJKLMNOPQRTSUVWXYZ";
-    for (uint16_t i = 0; i < sizeof(characters); i++)
-      if (chr == characters[i]) return i;
-    return 0xffff;
-    */
+    if (chr >= ' ' && chr <= 'Z')
+      return chr - ' ';
+    else
+      return 0xffff;
   }
 };
 #endif

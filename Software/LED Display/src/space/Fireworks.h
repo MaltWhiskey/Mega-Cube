@@ -5,9 +5,7 @@
 
 class Fireworks : public Animation {
  private:
-  Timer timer_duration;
-  const float radius = 7.5f;
-
+  float radius;
   uint16_t numDebris;
   Vector3 source;
   Vector3 target;
@@ -15,13 +13,15 @@ class Fireworks : public Animation {
   Vector3 gravity;
   Particle missile;
   Particle debris[200];
-  uint8_t repeats;
   boolean exploded;
 
+  static constexpr auto &settings = config.animation.fireworks;
+
  public:
-  void init(float duration) {
+  void init() {
     state = state_t::RUNNING;
-    timer_duration = duration;
+    timer_running = settings.runtime;
+    radius = settings.radius;
     fireArrow();
   }
 
@@ -46,7 +46,9 @@ class Fireworks : public Animation {
   }
 
   void draw(float dt) {
-    setMotionBlur(config.animation.fireworks.motionBlur);
+    setMotionBlur(settings.motionBlur);
+    uint8_t brightness = settings.brightness;
+
     // Missile drawing mode
     if (!exploded) {
       Vector3 temp = missile.position;
@@ -95,10 +97,10 @@ class Fireworks : public Animation {
         if (random(0, 20) == 0) {
           c = Color::WHITE;
         }
-        c.scale(debris[i].brightness * 255);
+        c.scale(debris[i].brightness * brightness);
         voxel_add(debris[i].position * radius, c);
       }
-      if (timer_duration.update()) {
+      if (timer_running.update()) {
         state = state_t::ENDING;
       }
       if (visible == 0) {
