@@ -142,9 +142,6 @@ void Animation::next(bool changed, uint16_t index) {
       jump.object->timer_running = 0;
     }
     if (jump.custom_init) jump.custom_init();
-    /////////////////////////////////////////////////////////
-    Serial.printf("%s - %s", jump.name, jump.description);
-    /////////////////////////////////////////////////////////
   } else {
     jump_item_t jump = get_item(animation_sequence++);
     if (!jump.object) {
@@ -152,10 +149,6 @@ void Animation::next(bool changed, uint16_t index) {
       jump = get_item(animation_sequence++);
     }
     if (jump.object) jump.object->init();
-    /////////////////////////////////////////////////////////
-    jump.object->timer_running = 5;
-    Serial.printf("%s - %s", jump.name, jump.description);
-    /////////////////////////////////////////////////////////
     if (jump.custom_init) jump.custom_init();
   }
 }

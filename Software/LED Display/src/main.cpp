@@ -28,7 +28,7 @@ void setup() {
   // Safety delay in case of code crash
   delay(2000);
   // Request time from Internet, the UART or Internet might fail
-  // ESP8266::request_time();
+  ESP8266::request_time();
   delay(3000);
   LCD::begin();
 }

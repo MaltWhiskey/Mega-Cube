@@ -12,9 +12,7 @@ void BTNCLICK(lv_event_t* e) {
 
 void EVENT_ARROWS(lv_event_t* e) {
   config.animation.changed = true;
-  config.animation.animation = 9;
-  jump_item_t jump = Animation::get_item(9);
-  Serial.println(jump.name);
+  config.animation.animation = 3;
 }
 
 void EVENT_FIREWORKS(lv_event_t* e) {
@@ -24,7 +22,7 @@ void EVENT_FIREWORKS(lv_event_t* e) {
 
 void EVENT_ATOMS(lv_event_t* e) {
   config.animation.changed = true;
-  config.animation.animation = 8;
+  config.animation.animation = 5;
 }
 
 void EVENT_SLIDER_CHG(lv_event_t* e) {

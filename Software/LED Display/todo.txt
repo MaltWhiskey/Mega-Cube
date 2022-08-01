@@ -1,0 +1,10 @@
+power/Graphics.h
+    look at asm for faster graphics drawing
+    make a class friend of display
+    fix wifi (hardware noise problem only this board)
+core/LCD.*
+    Implement LCD with vindar Library
+    println Logging to wio terminal (noise problem)
+space/
+    pong scores + fading in after destruction
+    clock

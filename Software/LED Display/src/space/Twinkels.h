@@ -3,6 +3,11 @@
 
 #include "Animation.h"
 
+// source buffer for original value
+DMAMEM Color colors[Display::width][Display::height][Display::depth];
+// time the pixel is activated
+DMAMEM float time[Display::width][Display::height][Display::depth];
+
 class Twinkels : public Animation {
  private:
   // amount of time before adding a new pixel
@@ -11,10 +16,6 @@ class Twinkels : public Animation {
   float fade_in_speed;
   // amount of seconds it takes to fade a pixel to min
   float fade_out_speed;
-  // source buffer for original value
-  Color colors[Display::width][Display::height][Display::depth] = {};
-  // time the pixel is activated
-  float time[Display::width][Display::height][Display::depth] = {};
   // single color for single color mode
   Color single_color;
   // different animation modes
