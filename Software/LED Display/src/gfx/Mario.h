@@ -6,7 +6,7 @@
 
 /* Piskel data for "Mario16x16" */
 
-PROGMEM static const uint32_t mario_data[4][256] = {
+PROGMEM const uint32_t mario_data[4][256] = {
     {0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0xff000000,
      0xff000000, 0xff000000, 0xff000000, 0xff000000, 0xff000000, 0x00000000,
      0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,

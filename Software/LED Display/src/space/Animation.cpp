@@ -70,10 +70,11 @@ void Animation::loop() {
         if (settings.changed) animation.end();
       }
     }
+    // Clear the settings changed flag. Animations are ended allready
+    settings.changed = false;
     // Select the next or specific animation from the sequence list
     if (active_animation_count == 0) {
-      Animation::next(settings.changed, settings.animation);
-      settings.changed = false;
+      Animation::next(settings.play_one, settings.animation);
     }
     // Commit current animation frame to the display
     Display::update();
@@ -134,8 +135,9 @@ jump_item_t Animation::get_item(uint16_t index) {
     return jump_table[index];
 }
 
-void Animation::next(bool changed, uint16_t index) {
-  if (changed) {
+void Animation::next(bool play_one, uint16_t index) {
+  if (play_one) {
+    // Play one specific animation endlessly
     jump_item_t jump = Animation::get_item(index);
     if (jump.object) {
       jump.object->init();
@@ -143,6 +145,7 @@ void Animation::next(bool changed, uint16_t index) {
     }
     if (jump.custom_init) jump.custom_init();
   } else {
+    // Play the next animation from the sequence
     jump_item_t jump = get_item(animation_sequence++);
     if (!jump.object) {
       animation_sequence = 0;

@@ -26,6 +26,7 @@ struct Config {
   } network;
   struct {
     boolean changed = false;
+    boolean play_one = false;
     uint8_t animation = 0;
     struct {
       float runtime = 30.0f;
