@@ -79,6 +79,6 @@ class LCD {
                             lv_color_t* color_p);
   static void cb_touchpad_read(lv_indev_drv_t* indev_driver,
                                lv_indev_data_t* data);
-  static void cb_tick_inc();
+  // static void cb_tick_inc();
 };
 #endif

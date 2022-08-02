@@ -52,8 +52,8 @@ void LCD::begin() {
   lv_indev_drv_register(&indev_drv);
 
   // Set the interval timer giving lvgl ticks.
-  static IntervalTimer guiTimer;
-  guiTimer.begin(cb_tick_inc, 1000);
+  // static IntervalTimer guiTimer;
+  // guiTimer.begin(cb_tick_inc, 1000);
 
   // Generate the GUI (generate with Squareline Studio)
   ui_init();
@@ -89,4 +89,4 @@ void LCD::cb_touchpad_read(lv_indev_drv_t* indev_driver,
 }
 
 // Callback to update lvgl's tick every ms.
-void LCD::cb_tick_inc() { lv_tick_inc(1); }
+// void LCD::cb_tick_inc() { lv_tick_inc(1); }
