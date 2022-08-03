@@ -66,6 +66,15 @@ void ui_init(void) {
   ui_create_icon(screen, 100, 215, 122, ui_event, &ui_img_next_80_png,
                  "Next page");
 
+  screen = ui_create_screen();
+  ui_settings_screen = screen;
+  lv_obj_add_event_cb(screen, ui_event, LV_EVENT_ALL, (void*)300);
+  lv_obj_set_style_bg_color(screen, lv_color_hex(0x000000),
+                            LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(screen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_img_src(screen, &ui_img_maltwhiskey_png,
+                              LV_PART_MAIN | LV_STATE_DEFAULT);
+
   lv_disp_load_scr(ui_animation_screens[0]);
 }
 
@@ -89,28 +98,40 @@ void ui_create_listed_icon(lv_obj_t* screen, uint32_t id, uint16_t x,
 void ui_event(lv_event_t* e) {
   lv_event_code_t event = lv_event_get_code(e);
   uint32_t id = (uint32_t)lv_event_get_user_data(e);
+  //  lv_obj_t* target = lv_event_get_target(e);
+  uint32_t type = id / 100;
+  uint32_t index = id % 100;
   if (event == LV_EVENT_CLICKED) {
-    if (id < 100) {
-      config.animation.changed = true;
-      config.animation.play_one = true;
-      config.animation.animation = id;
-    } else if (id < 200) {
-      _ui_screen_change(ui_animation_screens[id - 100],
-                        LV_SCR_LOAD_ANIM_MOVE_LEFT, 1000, 0);
-    } else if (id < 300) {
-      config.animation.changed = true;
-      config.animation.play_one = false;
+    switch (type) {
+      case 0:  // Change animation
+        config.animation.changed = true;
+        config.animation.play_one = true;
+        config.animation.animation = index;
+        break;
+      case 1:  // Next Page
+        _ui_screen_change(ui_animation_screens[index],
+                          LV_SCR_LOAD_ANIM_MOVE_LEFT, 1000, 0);
+        break;
+      case 2:  // Play All
+        config.animation.changed = true;
+        config.animation.play_one = false;
+        break;
     }
   }
   if (event == LV_EVENT_LONG_PRESSED) {
-    if (id < 100) {
-      //_ui_screen_change(ui_configuration_screens[id],
-      // LV_SCR_LOAD_ANIM_FADE_ON,
-      //                  1000, 0);
-    } else if (id < 200) {
-    } else if (id < 300) {
-      //_ui_screen_change(ui_settings_screen, LV_SCR_LOAD_ANIM_FADE_ON, 1000,
-      //0);
+    switch (type) {
+      case 0:  // Animation configuration screen
+        //          _ui_screen_change(ui_configuration_screens[index],
+        //                            LV_SCR_LOAD_ANIM_FADE_ON, 1000, 0);
+        break;
+      case 2:  // Settings screen
+        _ui_screen_change(ui_settings_screen, LV_SCR_LOAD_ANIM_FADE_ON, 1000,
+                          0);
+        break;
+      case 3:  // Return from settings screen
+        _ui_screen_change(ui_animation_screens[0], LV_SCR_LOAD_ANIM_FADE_ON,
+                          1000, 0);
+        break;
     }
   }
 }
@@ -142,7 +163,7 @@ void ui_create_icon(lv_obj_t* screen, uint32_t id, uint16_t x, uint16_t y,
   lv_obj_set_x(button, 0);
   lv_obj_set_y(button, 6);
   lv_obj_set_align(button, LV_ALIGN_TOP_MID);
-  // The pointer IS the value to enable casting "id" needs to be sizeof(void*)
+  // The pointer IS the value! To enable casting "id" needs to be sizeof(void*)
   // This hack enables freeing the memory for "id". No need to keep in global
   lv_obj_add_event_cb(button, event, LV_EVENT_ALL, (void*)id);
   lv_obj_set_style_radius(button, 15, LV_PART_MAIN | LV_STATE_DEFAULT);
