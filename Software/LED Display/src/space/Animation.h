@@ -25,10 +25,10 @@ class Animation;
 
 // Jump item configuration
 struct jump_item_t {
-  String name;
-  String description;
+  const char* name;
+  const char* description;
   void (*custom_init)();
-  Animation *object;
+  Animation* object;
 };
 
 class Animation {
@@ -38,7 +38,7 @@ class Animation {
   // Position in the sequence table
   static uint16_t animation_sequence;
   // Settings of animations
-  static constexpr auto &settings = config.animation;
+  static constexpr auto& settings = config.animation;
 
  public:
   // Shared Noise Object
