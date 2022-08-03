@@ -82,7 +82,7 @@ void Animation::loop() {
 }
 
 // Override end method if more is needed than changing state and restarting the
-// ending timer.
+// ending timer (or when the state doesn't need to be running)
 void Animation::end() {
   if (state == state_t::RUNNING) {
     state = state_t::ENDING;

@@ -45,6 +45,12 @@ class Twinkels : public Animation {
           colors[x][y][z] = Color::BLACK;
         }
   }
+  void end() {
+    if (state == state_t::RUNNING) {
+      state = state_t::ENDING;
+      mode_fade_out = true;
+    }
+  }
 
   void draw(float dt) {
     setMotionBlur(settings.motionBlur);
