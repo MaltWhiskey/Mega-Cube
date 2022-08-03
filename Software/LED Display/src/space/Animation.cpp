@@ -81,15 +81,18 @@ void Animation::loop() {
   }
 }
 
-// Override end method if more is needed than changing state and restarting the
-// ending timer (or when the state doesn't need to be running)
+// Override end method if more is needed than changing state and starting the
+// ending timer or when the state matters.
 void Animation::end() {
-  if (state == state_t::RUNNING) {
+  if (state == state_t::STARTING) {
+    timer_ending = Timer(2.0f, timer_starting.ratio(), true);
+    state = state_t::ENDING;
+  } else if (state == state_t::RUNNING) {
     state = state_t::ENDING;
     timer_ending = 1.0f;
+  } else if (state == state_t::ENDING) {
   }
 }
-
 // Get fps, if animate has been called than t > 0
 float Animation::fps() {
   if (animation_timer.dt() > 0) {

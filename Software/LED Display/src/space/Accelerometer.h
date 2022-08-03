@@ -17,10 +17,19 @@ class Accelerometer : public Animation {
     if (timer_running.update()) {
       state = state_t::INACTIVE;
     }
-
+    if (state == state_t::ENDING) {
+      state = state_t::INACTIVE;
+    }
     setMotionBlur(settings.motionBlur);
     auto &hid = config.hid.accelerometer;
-    Vector3 v = Vector3(hid.x, hid.z, hid.y).normalized();
+    Vector3 v = Vector3(hid.x, hid.z, hid.y);
+    if (v.magnitude() > 0)
+      v.normalize();
+    else {
+      line(Vector3(1, 1, 1));
+      line(Vector3(-1, 1, -1));
+      return;
+    }
     Quaternion ortho = Quaternion(90, Vector3::Y) * Quaternion(180, Vector3::X);
     line(ortho.rotate(v));
 

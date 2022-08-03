@@ -5,7 +5,7 @@
 
 class Spectrum : public Animation {
  private:
-  float amplitude[64] = {0};
+  float amplitude[64] = {2};
   uint8_t rx, ry, rz;
   float time_phase = 0;
   float time_fading = 2.0f;

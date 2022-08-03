@@ -52,7 +52,7 @@ class Plasma : public Animation {
     if (state == state_t::STARTING) {
       if (timer_starting.update()) {
         state = state_t::RUNNING;
-        timer_running.restart();
+        timer_running.reset();
       } else {
         brightness *= timer_starting.ratio();
       }
@@ -60,7 +60,7 @@ class Plasma : public Animation {
     if (state == state_t::RUNNING) {
       if (timer_running.update()) {
         state = state_t::ENDING;
-        timer_ending.restart();
+        timer_ending.reset();
       }
     }
     if (state == state_t::ENDING) {

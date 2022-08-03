@@ -20,19 +20,26 @@ class Timer {
  public:
   Timer();
   Timer(const float alarm);
+  Timer(const float alarm, const float ratio, const bool inversed);
   void operator=(const float alarm);
+  // returns > 0 if set time has passed
   unsigned long update();
+  // ratio of run time over set time
   float ratio();
-  void restart();
+  // reset the clock and start counting
+  void reset();
+  // delta time, run time and set time are in seconds
   float dt() const;
-  float rt() const;
+  float run_time() const;
+  float set_time() const;
 
  private:
-  // alarm time in seconds
-  float m_alarmTime = 0;
+  void update_internals();
+  // alarm time in microseconds
+  unsigned long m_alarmTime = 0;
   // amount of times counted to alarm
   unsigned long m_alarmCount = 0;
-  // time management
+  // time management in microseconds
   unsigned long m_startTime = 0;
   unsigned long m_lastTime = 0;
   unsigned long m_currentTime = 0;

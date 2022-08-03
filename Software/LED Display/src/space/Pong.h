@@ -18,8 +18,12 @@ class Pad {
   bool move(const float dt, uint8_t scale) {
     if (!exploded) {  // Exploded pads don't move
       auto& hid = config.hid.accelerometer;
-      Vector3 v = Vector3(hid.x, hid.z, hid.y).normalized();
-
+      Vector3 v = Vector3(hid.x, hid.z, hid.y);
+      if (v.magnitude() > 0)
+        v.normalize();
+      else {
+        v = Vector3(0, 1, 0);
+      }
       Quaternion front = Quaternion(-90, Vector3::X) *
                          Quaternion(90, Vector3::Y) *
                          Quaternion(180, Vector3::X);
@@ -163,7 +167,7 @@ class Pong : public Animation {
     if (state == state_t::STARTING) {
       if (timer_starting.update()) {
         state = state_t::RUNNING;
-        timer_running.restart();
+        timer_running.reset();
       } else {
         brightness *= timer_starting.ratio();
       }
@@ -171,7 +175,7 @@ class Pong : public Animation {
     if (state == state_t::RUNNING) {
       if (timer_running.update()) {
         state = state_t::ENDING;
-        timer_ending.restart();
+        timer_ending.reset();
       }
     }
     if (state == state_t::ENDING) {
