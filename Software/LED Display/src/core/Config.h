@@ -129,8 +129,10 @@ struct Config {
       uint8_t motionBlur = 0;
     } sinus;
     struct {
+      float starttime = 5.0f;
       float runtime = 30.0f;
-      int8_t hue_speed = 25;
+      float endtime = 5.0f;
+      int8_t hue_speed = -25;
       uint8_t brightness = 200;
       uint8_t motionBlur = 220;
     } spectrum;

@@ -5,10 +5,8 @@
 
 class Spectrum : public Animation {
  private:
-  float amplitude[64] = {2};
+  float amplitude[64] = {0};
   uint8_t rx, ry, rz;
-  float time_phase = 0;
-  float time_fading = 2.0f;
   bool btn_A = false;
   bool btn_B = false;
   bool btn_C = false;
@@ -34,12 +32,14 @@ class Spectrum : public Animation {
       y = x;
       x = t;
     }
-    voxel(x, y, z, c.scale((1 - (time_phase / time_fading)) * 255));
+    voxel(x, y, z, c);
   }
 
   void init() {
-    state = state_t::RUNNING;
+    state = state_t::STARTING;
+    timer_starting = settings.starttime;
     timer_running = settings.runtime;
+    timer_ending = settings.endtime;
     hue16_speed = settings.hue_speed * 255;
   }
 
@@ -48,18 +48,41 @@ class Spectrum : public Animation {
     uint8_t brightness = settings.brightness;
     hue16 += dt * hue16_speed;
 
+    if (state == state_t::STARTING) {
+      if (timer_starting.update()) {
+        state = state_t::RUNNING;
+        timer_running.reset();
+      } else {
+        brightness *= timer_starting.ratio();
+      }
+    }
+    if (state == state_t::RUNNING) {
+      if (timer_running.update()) {
+        state = state_t::ENDING;
+        timer_ending.reset();
+      }
+    }
+    if (state == state_t::ENDING) {
+      if (timer_ending.update()) {
+        state = state_t::INACTIVE;
+        brightness = 0;
+      } else {
+        brightness *= (1 - timer_ending.ratio());
+      }
+    }
+
     auto &hid = config.hid.button;
     if (btn_A != hid.a) {
       btn_A = hid.a;
-      rx = (rx + 1) & 3;
+      if (hid.a) rx = (rx + 1) & 3;
     }
     if (btn_B != hid.b) {
       btn_B = hid.b;
-      ry = (ry + 1) & 3;
+      if (hid.b) ry = (ry + 1) & 3;
     }
     if (btn_C != hid.c) {
       btn_C = hid.c;
-      rz = (rz + 1) & 3;
+      if (hid.c) rz = (rz + 1) & 3;
     }
 
     auto &fft = config.hid.fft;
@@ -87,15 +110,6 @@ class Spectrum : public Animation {
         rotate_voxel(e, x, y, z + 1);
         rotate_voxel(e, x + 1, y, z);
         rotate_voxel(e, x + 1, y, z + 1);
-      }
-    }
-    if (timer_running.update()) {
-      state = state_t::ENDING;
-    }
-    if (state == state_t::ENDING) {
-      time_phase += dt;
-      if (time_phase > time_fading) {
-        state = state_t::INACTIVE;
       }
     }
   }
