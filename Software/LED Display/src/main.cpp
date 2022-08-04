@@ -14,6 +14,8 @@ Config config;
 void setup() {
   // Start with clearing blue leds asap
   Animation::begin();
+  // Safety delay in case of code crash
+  // delay(5000);
   // Serial output to usb for console display
   Serial.begin(115200);
   // ESP8266 UART baudrate on Hardware Serial1
@@ -28,8 +30,6 @@ void setup() {
   ESP8266::request_time();
   // Start the LCD driver
   LCD::begin();
-  // Safety delay in case of code crash
-  // delay(5000);
 }
 /*------------------------------------------------------------------------------
  * Start the main loop

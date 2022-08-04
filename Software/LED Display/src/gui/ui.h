@@ -49,13 +49,17 @@ extern lv_obj_t * ui_Button16;
 extern lv_obj_t * ui_Button17;
 extern lv_obj_t * ui_Button18;
 extern lv_obj_t * ui_Screen3;
-extern lv_obj_t * ui_Screen4;
+extern lv_obj_t * ui_Label7;
+extern lv_obj_t * ui_Brightness;
+extern lv_obj_t * ui_Label8;
+extern lv_obj_t * ui_Motionblur;
 
 void Event_Play_All(lv_event_t * e);
 void Event_Play_Accelerometer(lv_event_t * e);
 void Event_Play_Arrows(lv_event_t * e);
 void Event_Play_Atoms(lv_event_t * e);
 void Event_Play_Helix(lv_event_t * e);
+void ZZZZZZZZZZZZZ(lv_event_t * e);
 
 LV_IMG_DECLARE(ui_img_settings_80_png);    // assets/Settings_80.png
 LV_IMG_DECLARE(ui_img_accelerometer_80_png);    // assets/Accelerometer_80.png
