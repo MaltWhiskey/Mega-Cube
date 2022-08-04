@@ -24,12 +24,12 @@ void setup() {
   // Prevents TX buffer overflow and blocking the program
   DMAMEM static char write_buffer[1024];
   Serial1.addMemoryForWrite(write_buffer, sizeof(write_buffer));
-  // Safety delay in case of code crash
-  delay(2000);
   // Request time from Internet, the UART or Internet might fail
   ESP8266::request_time();
-  delay(3000);
+  // Start the LCD driver
   LCD::begin();
+  // Safety delay in case of code crash
+  // delay(5000);
 }
 /*------------------------------------------------------------------------------
  * Start the main loop

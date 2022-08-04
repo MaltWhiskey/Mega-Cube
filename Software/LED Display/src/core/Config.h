@@ -112,7 +112,9 @@ struct Config {
       uint8_t motionBlur = 200;
     } pong;
     struct {
+      float starttime = 0.5f;
       float runtime = 30.0f;
+      float endtime = 2.0f;
       float rotation_speed = 90.0f;
       uint8_t brightness = 200;
       uint8_t motionBlur = 220;

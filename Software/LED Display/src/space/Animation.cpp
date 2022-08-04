@@ -81,18 +81,19 @@ void Animation::loop() {
   }
 }
 
-// Override end method if more is needed than changing state and starting the
-// ending timer or when the state matters.
+// Override end method if more is needed than changing state and ending timer.
 void Animation::end() {
   if (state == state_t::STARTING) {
     timer_ending = Timer(2.0f, timer_starting.ratio(), true);
-    state = state_t::ENDING;
   } else if (state == state_t::RUNNING) {
-    state = state_t::ENDING;
-    timer_ending = 1.0f;
-  } else if (state == state_t::ENDING) {
+    timer_ending = 2.0f;
+  } else if (state == state_t::ENDING && !time_reduction) {
+    timer_ending = Timer(2.0f, timer_ending.ratio(), false);
   }
+  state = state_t::ENDING;
+  time_reduction = true;
 }
+
 // Get fps, if animate has been called than t > 0
 float Animation::fps() {
   if (animation_timer.dt() > 0) {
@@ -105,7 +106,7 @@ void FIREWORKS() {
   fireworks2.init();
   fireworks2.timer_running = fireworks1.timer_running;
 }
-void SCROLLER() { scroller.set_text("#MALT WHISKEY$\xff"); }
+void SCROLLER() { scroller.set_text("#MALT WHISKEY"); }
 void TWINKELS1() {
   twinkels.set_mode(true, false);
   twinkels.set_color(Color(255, 150, 30));
@@ -144,6 +145,7 @@ void Animation::next(bool play_one, uint16_t index) {
     jump_item_t jump = Animation::get_item(index);
     if (jump.object) {
       jump.object->init();
+      jump.object->time_reduction = false;
       jump.object->timer_running = 0;
     }
     if (jump.custom_init) jump.custom_init();
@@ -154,7 +156,10 @@ void Animation::next(bool play_one, uint16_t index) {
       animation_sequence = 0;
       jump = get_item(animation_sequence++);
     }
-    if (jump.object) jump.object->init();
+    if (jump.object) {
+      jump.object->init();
+      jump.object->time_reduction = false;
+    }
     if (jump.custom_init) jump.custom_init();
   }
 }

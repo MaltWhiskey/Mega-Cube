@@ -54,6 +54,8 @@ class Animation {
   uint8_t brightness;
   // When animation is not inactive draw this on the display
   state_t state = state_t::INACTIVE;
+  // When animation is ended, time is reduced only once
+  bool time_reduction = false;
 
   virtual ~Animation(){};
   // Start displaying animations

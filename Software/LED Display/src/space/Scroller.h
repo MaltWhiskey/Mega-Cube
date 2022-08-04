@@ -9,15 +9,16 @@ class Scroller : public Animation {
  private:
   float text_rotation;
   float text_rotation_speed;
-  String text =
-      " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\xff";
+  String text = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
   static constexpr auto &settings = config.animation.scroller;
 
  public:
   void init() {
-    state = state_t::RUNNING;
+    state = state_t::STARTING;
+    timer_starting = settings.starttime;
     timer_running = settings.runtime;
+    timer_ending = settings.endtime;
     text_rotation = -95.0f;
     text_rotation_speed = settings.rotation_speed;
   }
@@ -27,8 +28,27 @@ class Scroller : public Animation {
     setMotionBlur(settings.motionBlur);
     uint8_t brightness = settings.brightness;
 
-    if (timer_running.update()) {
-      state = state_t::ENDING;
+    if (state == state_t::STARTING) {
+      if (timer_starting.update()) {
+        state = state_t::RUNNING;
+        timer_running.reset();
+      } else {
+        brightness *= timer_starting.ratio();
+      }
+    }
+    if (state == state_t::RUNNING) {
+      if (timer_running.update()) {
+        state = state_t::ENDING;
+        timer_ending.reset();
+      }
+    }
+    if (state == state_t::ENDING) {
+      if (timer_ending.update()) {
+        state = state_t::INACTIVE;
+        brightness = 0;
+      } else {
+        brightness *= (1 - timer_ending.ratio());
+      }
     }
 
     // Amount of degrees the text has been rotated
@@ -59,17 +79,8 @@ class Scroller : public Animation {
     uint16_t text_lines = (CHARSET_FRAME_HEIGHT + blank_lines) * text.length();
     while (line_angle > -line_angle_adj) {
       uint16_t text_offset = pixel_line % text_lines;
-      uint16_t t =
-          match_char(text[text_offset / (CHARSET_FRAME_HEIGHT + blank_lines)]);
-      if (t == 0xffff) {
-        if (line_angle > 90.0f) {
-          text_rotation = -95.0f;
-          if (state == state_t::ENDING) {
-            state = state_t::INACTIVE;
-          }
-        }
-        break;
-      }
+      uint16_t char_offset = text_offset / (CHARSET_FRAME_HEIGHT + blank_lines);
+      uint16_t t = match_char(text.charAt(char_offset));
       uint16_t y = pixel_line++ % (CHARSET_FRAME_HEIGHT + blank_lines);
       if (y < CHARSET_FRAME_HEIGHT) {
         Quaternion q = Quaternion(line_angle, Vector3::X);
@@ -94,7 +105,7 @@ class Scroller : public Animation {
     if (chr >= ' ' && chr <= 'Z')
       return chr - ' ';
     else
-      return 0xffff;
+      return '#' - ' ';
   }
 };
 #endif

@@ -75,5 +75,16 @@ class Helix : public Animation {
       if (stage == progress++) state = state_t::INACTIVE;
     }
   }
+  void end() {
+    if (state == state_t::RUNNING) {
+      timer_interval = timer_interval.set_time() / 5;
+      state = state_t::ENDING;
+      time_reduction = true;
+    } else if (state == state_t::ENDING && !time_reduction) {
+      timer_interval = timer_interval.set_time() / 5;
+      state = state_t::ENDING;
+      time_reduction = true;
+    }
+  }
 };
 #endif

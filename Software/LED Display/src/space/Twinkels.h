@@ -25,6 +25,7 @@ class Twinkels : public Animation {
   static constexpr auto &settings = config.animation.twinkels;
 
  public:
+  Twinkels() { set_clear(); }
   void init() {
     state = state_t::RUNNING;
     timer_running = settings.runtime;
