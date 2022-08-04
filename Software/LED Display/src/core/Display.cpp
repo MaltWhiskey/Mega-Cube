@@ -31,6 +31,8 @@ void Display::setupRAM(void) {
   memset(dmaBufferLow, 0, sizeof(dmaBufferLow));
   memset(cube, 0, sizeof(cube));
   arm_dcache_flush(dmaBufferData, sizeof(dmaBufferData));
+  arm_dcache_flush(dmaBufferHigh, sizeof(dmaBufferHigh));
+  arm_dcache_flush(dmaBufferLow, sizeof(dmaBufferLow));
 }
 // Triggered after all led data is sent but before reset/latch
 void Display::displayReady(void) {
