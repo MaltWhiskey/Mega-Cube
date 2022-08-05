@@ -205,10 +205,10 @@ class Life : public Animation {
     time_interval = settings.interval;
     time_phase = time_interval * 2;
     game_reset();
+    setMotionBlur(config.animation.life.motionBlur);
   }
 
   void draw(float dt) {
-    setMotionBlur(config.animation.life.motionBlur);
     uint8_t brightness = settings.brightness;
 
     if (timer_running.update()) {

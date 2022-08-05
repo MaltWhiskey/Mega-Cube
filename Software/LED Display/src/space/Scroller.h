@@ -21,11 +21,11 @@ class Scroller : public Animation {
     timer_ending = settings.endtime;
     text_rotation = -95.0f;
     text_rotation_speed = settings.rotation_speed;
+    setMotionBlur(settings.motionBlur);
   }
   void set_text(String s) { text = s; }
 
   void draw(float dt) {
-    setMotionBlur(settings.motionBlur);
     uint8_t brightness = settings.brightness;
 
     if (state == state_t::STARTING) {

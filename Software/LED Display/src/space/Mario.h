@@ -34,10 +34,10 @@ class Mario : public Animation {
     radius_start = settings.radius_start;
 
     angle = 0;
+    setMotionBlur(settings.motionBlur);
   }
 
   void draw(float dt) {
-    setMotionBlur(settings.motionBlur);
     uint8_t brightness = settings.brightness;
 
     float radius = radius_max;

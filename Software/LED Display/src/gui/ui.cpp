@@ -9,8 +9,9 @@
 
 ///////////////////// PROTOTYPES ///////////////////
 lv_obj_t* ui_create_screen();
-lv_obj_t* ui_create_slider(lv_obj_t* screen, uint16_t x, uint16_t y,
-                           const char* text);
+lv_obj_t* ui_create_label(lv_obj_t* screen, uint16_t x, uint16_t y,
+                          const char* text);
+lv_obj_t* ui_create_slider(lv_obj_t* screen, uint16_t x, uint16_t y);
 void ui_create_listed_icon(lv_obj_t* screen, uint32_t id, uint16_t x,
                            uint16_t y, lv_event_cb_t event);
 void ui_create_icon(lv_obj_t* screen, uint32_t id, uint16_t x, uint16_t y,
@@ -21,6 +22,21 @@ void ui_event(lv_event_t* e);
 lv_obj_t* ui_animation_screens[4];
 lv_obj_t* ui_configuration_screens[14];
 lv_obj_t* ui_settings_screens[1];
+lv_obj_t* ui_label_brightness;
+lv_obj_t* ui_slider_brightness;
+lv_obj_t* ui_label_motionblur;
+lv_obj_t* ui_slider_motionblur;
+
+void ui_refresh(lv_timer_t* timer) {
+  lv_label_set_text_fmt(ui_label_brightness, "Brightness : %d",
+                        Display::getBrightness());
+  lv_slider_set_value(ui_slider_brightness, Display::getBrightness(),
+                      LV_ANIM_OFF);
+  lv_label_set_text_fmt(ui_label_motionblur, "Motionblur : %d",
+                        Display::getMotionBlur());
+  lv_slider_set_value(ui_slider_motionblur, Display::getMotionBlur(),
+                      LV_ANIM_OFF);
+}
 
 void ui_init(void) {
   lv_disp_t* dispp = lv_disp_get_default();
@@ -80,12 +96,16 @@ void ui_init(void) {
                             LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_opa(screen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  lv_obj_t* slider1 = ui_create_slider(screen, 0, 40, "Brightness");
-  lv_obj_add_event_cb(slider1, ui_event, LV_EVENT_ALL, (void*)400);
-  lv_obj_t* slider2 = ui_create_slider(screen, 0, 130, "Motionblur");
-  lv_obj_add_event_cb(slider2, ui_event, LV_EVENT_ALL, (void*)401);
+  ui_label_brightness = ui_create_label(screen, 0, 40, "Brightness");
+  ui_slider_brightness = ui_create_slider(screen, 0, 40 + 25);
+  lv_obj_add_event_cb(ui_slider_brightness, ui_event, LV_EVENT_ALL, (void*)400);
+
+  ui_label_motionblur = ui_create_label(screen, 0, 130, "Motionblur");
+  ui_slider_motionblur = ui_create_slider(screen, 0, 130 + 25);
+  lv_obj_add_event_cb(ui_slider_motionblur, ui_event, LV_EVENT_ALL, (void*)401);
 
   lv_disp_load_scr(ui_animation_screens[0]);
+  lv_timer_create(ui_refresh, 500, NULL);
 }
 
 void ui_create_listed_icon(lv_obj_t* screen, uint32_t id, uint16_t x,
@@ -131,14 +151,17 @@ void ui_event(lv_event_t* e) {
   if (event == LV_EVENT_LONG_PRESSED) {
     switch (type) {
       case 0:  // Animation configuration screen (one for each animation)
+        lv_indev_wait_release(lv_indev_get_act());
         _ui_screen_change(ui_configuration_screens[index - index],
                           LV_SCR_LOAD_ANIM_FADE_ON, 1000, 0);
         break;
       case 2:  // Settings screen
+        lv_indev_wait_release(lv_indev_get_act());
         _ui_screen_change(ui_settings_screens[0], LV_SCR_LOAD_ANIM_FADE_ON,
                           1000, 0);
         break;
       case 3:  // Return from settings screen
+        lv_indev_wait_release(lv_indev_get_act());
         _ui_screen_change(ui_animation_screens[0], LV_SCR_LOAD_ANIM_FADE_ON,
                           1000, 0);
         break;
@@ -182,9 +205,8 @@ void ui_create_icon(lv_obj_t* screen, uint32_t id, uint16_t x, uint16_t y,
   lv_obj_set_x(button, 0);
   lv_obj_set_y(button, 6);
   lv_obj_set_align(button, LV_ALIGN_TOP_MID);
-  // The pointer IS the value! To enable casting "id" needs to be
-  // sizeof(void*) This hack enables freeing the memory for "id". No need to
-  // keep in global
+  // The pointer IS the value! To enable casting "id" needs to be sizeof(void*)
+  // This hack enables freeing the memory for "id". No need to keep in global
   lv_obj_add_event_cb(button, event, LV_EVENT_ALL, (void*)id);
   lv_obj_set_style_radius(button, 15, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_color(button, lv_color_hex(0x000000),
@@ -213,8 +235,8 @@ void ui_create_icon(lv_obj_t* screen, uint32_t id, uint16_t x, uint16_t y,
                               LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
-lv_obj_t* ui_create_slider(lv_obj_t* screen, uint16_t x, uint16_t y,
-                           const char* text) {
+lv_obj_t* ui_create_label(lv_obj_t* screen, uint16_t x, uint16_t y,
+                          const char* text) {
   lv_obj_t* label = lv_label_create(screen);
   lv_obj_set_width(label, LV_SIZE_CONTENT);
   lv_obj_set_height(label, LV_SIZE_CONTENT);
@@ -225,14 +247,17 @@ lv_obj_t* ui_create_slider(lv_obj_t* screen, uint16_t x, uint16_t y,
   lv_obj_set_style_text_color(label, lv_color_hex(0xFFFFFF),
                               LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_text_opa(label, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  return label;
+}
 
+lv_obj_t* ui_create_slider(lv_obj_t* screen, uint16_t x, uint16_t y) {
   lv_obj_t* slider = lv_slider_create(screen);
   lv_slider_set_range(slider, 0, 255);
   lv_slider_set_value(slider, 255, LV_ANIM_OFF);
   lv_obj_set_width(slider, 220);
   lv_obj_set_height(slider, 25);
-  lv_obj_set_x(slider, x + 00);
-  lv_obj_set_y(slider, y + 25);
+  lv_obj_set_x(slider, x);
+  lv_obj_set_y(slider, y);
   lv_obj_set_align(slider, LV_ALIGN_TOP_MID);
 
   lv_obj_set_style_radius(slider, 25, LV_PART_MAIN | LV_STATE_DEFAULT);

@@ -32,6 +32,7 @@ class Twinkels : public Animation {
     timer_interval = settings.interval;
     fade_in_speed = settings.fade_in_speed;
     fade_out_speed = settings.fade_out_speed;
+    setMotionBlur(settings.motionBlur);
   }
   void set_mode(bool single, bool fade_out) {
     mode_single_color = single;
@@ -54,7 +55,6 @@ class Twinkels : public Animation {
   }
 
   void draw(float dt) {
-    setMotionBlur(settings.motionBlur);
     uint8_t brightness = settings.brightness;
     uint16_t pixels_active = 0;
 

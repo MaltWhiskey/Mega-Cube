@@ -41,10 +41,10 @@ class Spectrum : public Animation {
     timer_running = settings.runtime;
     timer_ending = settings.endtime;
     hue16_speed = settings.hue_speed * 255;
+    setMotionBlur(settings.motionBlur);
   }
 
   void draw(float dt) {
-    setMotionBlur(settings.motionBlur);
     uint8_t brightness = settings.brightness;
     hue16 += dt * hue16_speed;
 

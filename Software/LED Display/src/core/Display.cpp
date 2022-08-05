@@ -97,13 +97,11 @@ bool Display::available() { return displayAvailable; }
 // Clear the cube so a new frame can be freshly created.
 void Display::clear() { memset(cube[cubeBuffer], 0, sizeof(cube[0])); }
 // Set the master display brightness value
-void Display::setBrightness(const uint8_t value) {  //
-  brightness = value;
-}
+void Display::setBrightness(const uint8_t value) { brightness = value; }
+uint8_t Display::getBrightness() { return brightness; }
 // Set the motion blur value
-void Display::setMotionBlur(const uint8_t value) {  //
-  motionBlur = value;
-}
+void Display::setMotionBlur(const uint8_t value) { motionBlur = value; }
+uint8_t Display::getMotionBlur() { return motionBlur; }
 /****************************************************************************
  * Set up PLL5 (also known as "VIDEO PLL")
  * This configures the Clock Controller Module (CCM)

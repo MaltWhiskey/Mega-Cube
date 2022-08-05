@@ -11,6 +11,7 @@ class Accelerometer : public Animation {
   void init() {
     state = state_t::RUNNING;
     timer_running = settings.runtime;
+    setMotionBlur(settings.motionBlur);
   }
 
   void draw(float dt) {
@@ -20,7 +21,7 @@ class Accelerometer : public Animation {
     if (state == state_t::ENDING) {
       state = state_t::INACTIVE;
     }
-    setMotionBlur(settings.motionBlur);
+
     auto &hid = config.hid.accelerometer;
     Vector3 v = Vector3(hid.x, hid.z, hid.y);
     if (v.magnitude() > 0)

@@ -29,10 +29,10 @@ class Sinus : public Animation {
 
     phase = 0;
     phase_speed = settings.phase_speed;
+    setMotionBlur(settings.motionBlur);
   }
 
   void draw(float dt) {
-    setMotionBlur(settings.motionBlur);
     uint8_t brightness = settings.brightness;
     phase += dt * phase_speed;
     hue16 += dt * hue16_speed;

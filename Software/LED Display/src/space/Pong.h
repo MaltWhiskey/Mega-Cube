@@ -157,10 +157,10 @@ class Pong : public Animation {
     hue16_speed = settings.hue_speed * 255;
     pad.init();
     ball.init();
+    setMotionBlur(settings.motionBlur);
   }
 
   void draw(float dt) {
-    setMotionBlur(settings.motionBlur);
     uint8_t brightness = settings.brightness;
     hue16 += dt * hue16_speed;
 

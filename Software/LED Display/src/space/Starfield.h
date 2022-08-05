@@ -31,10 +31,10 @@ class Starfield : public Animation {
       }
       initialized = true;
     }
+    setMotionBlur(settings.motionBlur);
   }
 
   void draw(float dt) {
-    setMotionBlur(settings.motionBlur);
     uint8_t brightness = settings.brightness;
     phase += dt * phase_speed;
     hue16 += dt * hue16_speed;

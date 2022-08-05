@@ -71,7 +71,9 @@ class Display {
   static void clear();
   // Set the motion blur value higher is more blur
   static void setMotionBlur(const uint8_t value);
+  static uint8_t getMotionBlur();
   // Set the master display brightness value
   static void setBrightness(const uint8_t value);
+  static uint8_t getBrightness();
 };
 #endif

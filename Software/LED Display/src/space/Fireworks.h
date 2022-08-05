@@ -23,6 +23,7 @@ class Fireworks : public Animation {
     timer_running = settings.runtime;
     radius = settings.radius;
     fireArrow();
+    setMotionBlur(settings.motionBlur);
   }
 
   void fireArrow() {
@@ -46,7 +47,6 @@ class Fireworks : public Animation {
   }
 
   void draw(float dt) {
-    setMotionBlur(settings.motionBlur);
     uint8_t brightness = settings.brightness;
 
     // Missile drawing mode
