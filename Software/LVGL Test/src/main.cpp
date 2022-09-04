@@ -138,7 +138,8 @@ void my_disp_flush(lv_disp_drv_t* disp, const lv_area_t* area,
 IntervalTimer guiTimer;
 
 // callback to update lvgl's tick every ms.
-void guiInc() { lv_tick_inc(1); }
+void guiInc() {  // lv_tick_inc(1);
+}
 
 void cb_touchpad_read(lv_indev_drv_t* indev_driver, lv_indev_data_t* data);
 void setup() {

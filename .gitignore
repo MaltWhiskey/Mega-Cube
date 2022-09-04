@@ -5,3 +5,6 @@
 .vscode/launch.json
 .vscode/ipch
 .DS_Store
+.DS_Store?
+squareline/cache/*
+squareline/backup/*
