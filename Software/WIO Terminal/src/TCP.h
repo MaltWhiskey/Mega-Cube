@@ -12,7 +12,7 @@ class TCP {
   struct {
     char ssid[64] = "-^..^-";
     char password[64] = "qazwsxedc";
-    char hostname[64] = "192.168.178.76";
+    char hostname[64] = "192.168.178.79";
     uint16_t tcp_port = 8000;
     uint16_t ota_port = 8266;
   } network;
