@@ -68,6 +68,7 @@ struct Config {
       float angle_speed = 0.0f;
       float radius = 7.5f;
       float resolution = 30;
+      uint8_t thickness = 16;
       int8_t hue_speed = 30;
       uint8_t brightness = 255;
       uint8_t motionBlur = 230;

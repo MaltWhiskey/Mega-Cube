@@ -68,7 +68,8 @@ class Helix : public Animation {
     if (timer_interval.update()) {
       int progress = 0;
       if (stage == progress++) top <= resolution ? top++ : stage++;
-      if (stage == progress++) thickness <= 16 ? thickness++ : stage++;
+      if (stage == progress++)
+        thickness <= settings.thickness ? thickness++ : stage++;
       if (stage == progress++)
         if (timer_running.update() || (state == state_t::ENDING)) stage++;
       if (stage == progress++) bottom <= resolution ? bottom++ : stage++;
