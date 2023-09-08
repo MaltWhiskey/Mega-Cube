@@ -30,6 +30,7 @@ struct Config {
     uint8_t animation = 0;
     struct {
       float runtime = 30.0f;
+      float radius = 7.5f;
       uint8_t motionBlur = 220;
     } accelerometer;
     struct {
@@ -39,6 +40,7 @@ struct Config {
       float angle_speed = -180.0f;
       float radius = 7.5f;
       float radius_start = 2.0f;
+      float distance = 1.5f;
       int8_t hue_speed = 25;
       uint8_t brightness = 200;
       uint8_t motionBlur = 220;
@@ -49,7 +51,8 @@ struct Config {
       float endtime = 3.0f;
       float angle_speed = 120.0f;
       float radius = 7.5f;
-      float radius_start = 0.0f;
+      float radius_start = 1.0f;
+      float distance = 4.0f;
       int8_t hue_speed = 25;
       uint8_t brightness = 200;
       uint8_t motionBlur = 200;
@@ -86,7 +89,7 @@ struct Config {
       float interval = 0.15f;
       float angle_speed = -70.0f;
       float radius = 7.5f;
-      float radius_start = 0.0f;
+      float radius_start = 1.0f;
       uint8_t brightness = 200;
       uint8_t motionBlur = 220;
     } mario;
@@ -117,6 +120,7 @@ struct Config {
       float runtime = 30.0f;
       float endtime = 2.0f;
       float rotation_speed = 90.0f;
+      float radius = 15.0f;
       uint8_t brightness = 200;
       uint8_t motionBlur = 220;
     } scroller;
@@ -147,6 +151,7 @@ struct Config {
       int8_t hue_speed = 30;
       uint8_t brightness = 200;
       uint8_t motionBlur = 230;
+      float body_diagonal = 13.0f;
     } starfield;
     struct {
       float runtime = 30.0f;

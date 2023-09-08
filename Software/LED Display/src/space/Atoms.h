@@ -9,6 +9,7 @@ class Atoms : public Animation {
   float angle;
   float angle_speed;
 
+  float distance;
   float radius_start;
   float radius_max;
   float arc;
@@ -26,12 +27,13 @@ class Atoms : public Animation {
     hue16_speed = settings.hue_speed * 255;
     radius_max = settings.radius;
     radius_start = settings.radius_start;
+    distance = settings.distance;
 
     angle = 0;
-    setMotionBlur(settings.motionBlur);
   }
 
   void draw(float dt) {
+    setMotionBlur(settings.motionBlur);
     uint8_t brightness = settings.brightness;
     float radius = radius_max;
 
@@ -92,10 +94,11 @@ class Atoms : public Animation {
                        Vector3(1, 1, 0).normalize(),
                        Vector3(0, 1, 1).normalize()};
 
-    for (uint8_t i = 0; i < 9; i++) {
+    uint8_t ATOMS = sizeof(atoms) / sizeof(Vector3);
+    for (uint8_t i = 0; i < ATOMS; i++) {
       Vector3 v = axes[i].rotate(atoms[i]) * radius;
       Color c = Color((hue16 >> 8) + (i * 8), RainbowGradientPalette);
-      radiate4(v, c.scale(brightness), 4.0f);
+      radiate5(v, c.scale(brightness), distance);
     }
   }
 };

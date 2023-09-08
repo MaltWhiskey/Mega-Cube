@@ -68,7 +68,7 @@ class Life : public Animation {
       for (int16_t y = 0; y < 16; y++) {
         cells_g2[x][y] = 0;
       }
-    // Leave the outer space empty and fill the rest with amout of living cells
+    // Leave the outer space empty and fill the rest with amount of living cells
     for (uint16_t i = 0; i < amount; i++) {
       // Get random polar coordinates somewhere within radius
       float r = noise.nextRandom(0, radius);
@@ -205,10 +205,10 @@ class Life : public Animation {
     time_interval = settings.interval;
     time_phase = time_interval * 2;
     game_reset();
-    setMotionBlur(config.animation.life.motionBlur);
   }
 
   void draw(float dt) {
+    setMotionBlur(config.animation.life.motionBlur);
     uint8_t brightness = settings.brightness;
 
     if (timer_running.update()) {

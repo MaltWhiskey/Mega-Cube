@@ -98,7 +98,7 @@ class Spectrum : public Animation {
 
     // Adjust bars and draw Spectrum
     for (uint8_t i = 0; i < 64; i++) {
-      uint8_t a = round(amplitude[i]) & 0xF;
+      uint8_t a = (int)round(amplitude[i]) & 0xF;
       amplitude[i] *= 0.99f;
       uint8_t z = (i >> 2) & 0xE;
       uint8_t x = (i << 1) & 0xF;

@@ -9,6 +9,7 @@ class Arrows : public Animation {
   float angle;
   float angle_speed;
 
+  float distance;
   float radius_start;
   float radius_max;
   float arc;
@@ -39,12 +40,13 @@ class Arrows : public Animation {
     hue16_speed = settings.hue_speed * 255;
     radius_max = settings.radius;
     radius_start = settings.radius_start;
+    distance = settings.distance;
 
     angle = 0;
-    setMotionBlur(settings.motionBlur);
   }
 
   void draw(float dt) {
+    setMotionBlur(settings.motionBlur);
     uint8_t brightness = settings.brightness;
     float radius = radius_max;
 
@@ -97,11 +99,11 @@ class Arrows : public Animation {
           Quaternion q1 = Quaternion(angle - (arc * point.y), Vector3::X);
           // Apply both rotations on the projected line and fill in color
           Color c = Color((hue16 >> 8) + 000 + 8 * y, RainbowGradientPalette);
-          radiate((q2 * q1).rotate(line * 0.8f), c.scale(brightness), 1.5);
+          radiate((q2 * q1).rotate(line * 0.8f), c.scale(brightness), distance);
           c = Color((hue16 >> 8) + 064 + 8 * y, RainbowGradientPalette);
-          radiate((q3 * q1).rotate(line * 0.9f), c.scale(brightness), 1.5);
+          radiate((q3 * q1).rotate(line * 0.9f), c.scale(brightness), distance);
           c = Color((hue16 >> 8) + 128 + 8 * y, RainbowGradientPalette);
-          radiate((q4 * q1).rotate(line * 1.0f), c.scale(brightness), 1.5);
+          radiate((q4 * q1).rotate(line * 1.0f), c.scale(brightness), distance);
         }
         mask >>= 1;
       }

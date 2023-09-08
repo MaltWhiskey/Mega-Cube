@@ -43,10 +43,10 @@ class Plasma : public Animation {
     speed_w = settings.speed_w;
     speed_offset = 0;
     speed_offset_speed = settings.speed_offset_speed;
-    setMotionBlur(settings.motionBlur);
   }
 
   void draw(float dt) {
+    setMotionBlur(settings.motionBlur);
     uint8_t brightness = settings.brightness;
 
     if (state == state_t::STARTING) {

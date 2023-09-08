@@ -39,10 +39,10 @@ class Helix : public Animation {
     top = 0;
     thickness = 0;
     stage = 0;
-    setMotionBlur(settings.motionBlur);
   }
 
   void draw(float dt) {
+    setMotionBlur(settings.motionBlur);
     uint8_t brightness = settings.brightness;
 
     phase += dt * phase_speed;

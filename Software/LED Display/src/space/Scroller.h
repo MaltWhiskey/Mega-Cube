@@ -7,6 +7,7 @@
 
 class Scroller : public Animation {
  private:
+  float radius;
   float text_rotation;
   float text_rotation_speed;
   String text = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -21,11 +22,12 @@ class Scroller : public Animation {
     timer_ending = settings.endtime;
     text_rotation = -95.0f;
     text_rotation_speed = settings.rotation_speed;
-    setMotionBlur(settings.motionBlur);
+    radius = settings.radius;
   }
   void set_text(String s) { text = s; }
 
   void draw(float dt) {
+    setMotionBlur(settings.motionBlur);
     uint8_t brightness = settings.brightness;
 
     if (state == state_t::STARTING) {
@@ -88,12 +90,9 @@ class Scroller : public Animation {
           uint32_t data = charset_data[t][y * CHARSET_FRAME_WIDTH + x];
           if (data & 0xff000000) {
             Color c = Color(data & 0xff, data >> 8 & 0xff, data >> 16 & 0xff);
-            // c = Color((hue16 >> 8) + y * 3 + x * 4,
-            // RainbowGradientPalette);
-            Vector3 pixel = q.rotate(Vector3(x / 15.0f, 0, -1) * 15.0f);
-            // radiate(pixel, c, 1.0f, Vector3(0, 0, 15));
-            voxel(pixel, c.scale(brightness).gamma(),
-                  Vector3(-7.5, -7.5, +7.5));
+            Vector3 pixel = q.rotate(Vector3(x / 15.0f, 0, -1) * radius);
+            pixel += Vector3(-radius / 2, -radius / 2, radius / 2);
+            voxel(pixel, c.scale(brightness).gamma());
           }
         }
       }

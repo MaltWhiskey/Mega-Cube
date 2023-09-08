@@ -7,6 +7,7 @@ class Starfield : public Animation {
  private:
   float phase;
   float phase_speed;
+  float body_diagonal;
 
   static const int numStars = 200;
   Vector3 stars[numStars];
@@ -22,6 +23,7 @@ class Starfield : public Animation {
     timer_ending = settings.endtime;
     phase_speed = settings.phase_speed;
     hue16_speed = settings.hue_speed * 255;
+    body_diagonal = settings.body_diagonal;
     phase = 0;
 
     if (!initialized) {
@@ -73,8 +75,8 @@ class Starfield : public Animation {
         stars[i] = Vector3(noise.nextRandom(-1, 1), noise.nextRandom(-1, 1), 1);
       }
       Color c = Color((hue16 >> 8) + (int8_t)(r * 6), RainbowGradientPalette);
-      // Multiply by sqrt(3) * radius = 12.99 => 13
-      voxel(q.rotate(stars[i]) * 13.0f, c.scale(brightness));
+      // Multiply by something a bit bigger than sqrt(3) * radius
+      voxel(q.rotate(stars[i]) * body_diagonal, c.scale(brightness));
     }
   }
 };

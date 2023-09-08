@@ -6,7 +6,7 @@
 // source buffer for original value
 DMAMEM Color colors[Display::width][Display::height][Display::depth];
 // time the pixel is activated
-DMAMEM float time[Display::width][Display::height][Display::depth];
+DMAMEM float duration[Display::width][Display::height][Display::depth];
 
 class Twinkels : public Animation {
  private:
@@ -32,7 +32,6 @@ class Twinkels : public Animation {
     timer_interval = settings.interval;
     fade_in_speed = settings.fade_in_speed;
     fade_out_speed = settings.fade_out_speed;
-    setMotionBlur(settings.motionBlur);
   }
   void set_mode(bool single, bool fade_out) {
     mode_single_color = single;
@@ -43,7 +42,7 @@ class Twinkels : public Animation {
     for (uint8_t x = 0; x < Display::width; x++)
       for (uint8_t y = 0; y < Display::height; y++)
         for (uint8_t z = 0; z < Display::depth; z++) {
-          time[x][y][z] = 0;
+          duration[x][y][z] = 0;
           colors[x][y][z] = Color::BLACK;
         }
   }
@@ -55,6 +54,7 @@ class Twinkels : public Animation {
   }
 
   void draw(float dt) {
+    setMotionBlur(settings.motionBlur);
     uint8_t brightness = settings.brightness;
     uint16_t pixels_active = 0;
 
@@ -62,18 +62,18 @@ class Twinkels : public Animation {
       for (uint8_t y = 0; y < Display::height; y++) {
         for (uint8_t z = 0; z < Display::depth; z++) {
           if (!colors[x][y][z].isBlack()) {
-            if (time[x][y][z] < fade_in_speed) {
-              float t = time[x][y][z] / fade_in_speed;
+            if (duration[x][y][z] < fade_in_speed) {
+              float t = duration[x][y][z] / fade_in_speed;
               voxel(x, y, z, colors[x][y][z].scaled(brightness * t));
-              time[x][y][z] += dt;
+              duration[x][y][z] += dt;
               pixels_active++;
-            } else if (time[x][y][z] < (fade_in_speed + fade_out_speed)) {
-              float t = (time[x][y][z] - fade_in_speed) / fade_out_speed;
+            } else if (duration[x][y][z] < (fade_in_speed + fade_out_speed)) {
+              float t = (duration[x][y][z] - fade_in_speed) / fade_out_speed;
               voxel(x, y, z, colors[x][y][z].scaled(brightness * (1 - t)));
-              time[x][y][z] += dt;
+              duration[x][y][z] += dt;
               pixels_active++;
             } else {
-              time[x][y][z] = 0;
+              duration[x][y][z] = 0;
               colors[x][y][z] = Color::BLACK;
               voxel(x, y, z, Color::BLACK);
             }
@@ -90,7 +90,7 @@ class Twinkels : public Animation {
         uint8_t x = random(0, Display::width);
         uint8_t y = random(0, Display::height);
         uint8_t z = random(0, Display::depth);
-        if (time[x][y][z] == 0) {
+        if (duration[x][y][z] == 0) {
           if (mode_single_color) {
             colors[x][y][z] = single_color;
           } else {

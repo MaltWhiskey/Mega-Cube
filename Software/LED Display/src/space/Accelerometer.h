@@ -5,16 +5,20 @@
 #include "Power/Math8.h"
 
 class Accelerometer : public Animation {
+ private:
+  float radius;
+
  public:
   static constexpr auto &settings = config.animation.accelerometer;
 
   void init() {
     state = state_t::RUNNING;
     timer_running = settings.runtime;
-    setMotionBlur(settings.motionBlur);
+    radius = settings.radius;
   }
 
   void draw(float dt) {
+    setMotionBlur(settings.motionBlur);
     if (timer_running.update()) {
       state = state_t::INACTIVE;
     }
@@ -48,7 +52,7 @@ class Accelerometer : public Animation {
         pointer.y = 1;
       else if (pointer.y < -1)
         pointer.y = -1;
-      voxel(pointer * -7.5f, Color::BLUE);
+      voxel(pointer * radius, Color::BLUE);
     }
   }
 };
