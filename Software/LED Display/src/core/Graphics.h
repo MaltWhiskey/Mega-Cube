@@ -41,113 +41,115 @@ inline void voxel(const uint8_t x, const uint8_t y, const uint8_t z,
   if (((x | y | z) & 0xF0) == 0) {
     Display::cube[Display::cubeBuffer][x][y][z] = c;
   }
+}
 
-  // Set voxel using system coordinates
-  inline void voxel(const Vector3 &v, const Color &c) {
-    // Round to nearest integer and translate back
-    int16_t x = (int16_t)(v.x + 32768.5f + CX) - 32768;
-    int16_t y = (int16_t)(v.y + 32768.5f + CY) - 32768;
-    int16_t z = (int16_t)(v.z + 32768.5f + CZ) - 32768;
-    if (((x | y | z) & 0xFFF0) == 0) {
-      Display::cube[Display::cubeBuffer][x][y][z] = c;
-    }
+// Set voxel using system coordinates
+inline void voxel(const Vector3 &v, const Color &c) {
+  // Round to nearest integer and translate back
+  int16_t x = (int16_t)(v.x + 32768.5f + CX) - 32768;
+  int16_t y = (int16_t)(v.y + 32768.5f + CY) - 32768;
+  int16_t z = (int16_t)(v.z + 32768.5f + CZ) - 32768;
+  if (((x | y | z) & 0xFFF0) == 0) {
+    Display::cube[Display::cubeBuffer][x][y][z] = c;
+  }
+}
 
-    // Set voxel using system coordinates
-    inline void voxel_add(const Vector3 &v, const Color &c) {
-      // Round to nearest integer and translate back
-      int16_t x = (int16_t)(v.x + 32768.5f + CX) - 32768;
-      int16_t y = (int16_t)(v.y + 32768.5f + CY) - 32768;
-      int16_t z = (int16_t)(v.z + 32768.5f + CZ) - 32768;
-      if (((x | y | z) & 0xFFF0) == 0) {
-        Display::cube[Display::cubeBuffer][x][y][z] += c;
-      }
+// Set voxel using system coordinates
+inline void voxel_add(const Vector3 &v, const Color &c) {
+  // Round to nearest integer and translate back
+  int16_t x = (int16_t)(v.x + 32768.5f + CX) - 32768;
+  int16_t y = (int16_t)(v.y + 32768.5f + CY) - 32768;
+  int16_t z = (int16_t)(v.z + 32768.5f + CZ) - 32768;
+  if (((x | y | z) & 0xFFF0) == 0) {
+    Display::cube[Display::cubeBuffer][x][y][z] += c;
+  }
+}
 
-      // Set voxel using system coordinates
-      inline void radiate(const Vector3 &v0, const Color &c, const float r) {
-        Vector3 v = v0 + Vector3(CX, CY, CZ);
-        int16_t x1 = (int16_t)(v.x - r + 1);  // round up
-        int16_t x2 = (int16_t)(v.x + r);      // round down
-        int16_t y1 = (int16_t)(v.y - r + 1);  // round up
-        int16_t y2 = (int16_t)(v.y + r);      // round down
-        int16_t z1 = (int16_t)(v.z - r + 1);  // round up
-        int16_t z2 = (int16_t)(v.z + r);      // round down
+// Set voxel using system coordinates
+inline void radiate(const Vector3 &v0, const Color &c, const float r) {
+  Vector3 v = v0 + Vector3(CX, CY, CZ);
+  int16_t x1 = (int16_t)(v.x - r + 1);  // round up
+  int16_t x2 = (int16_t)(v.x + r);      // round down
+  int16_t y1 = (int16_t)(v.y - r + 1);  // round up
+  int16_t y2 = (int16_t)(v.y + r);      // round down
+  int16_t z1 = (int16_t)(v.z - r + 1);  // round up
+  int16_t z2 = (int16_t)(v.z + r);      // round down
 
-        for (int16_t x = x1; x <= x2; x++)
-          for (int16_t y = y1; y <= y2; y++)
-            for (int16_t z = z1; z <= z2; z++) {
-              if (((x | y | z) & 0xFFF0) == 0) {
-                float radius = (Vector3(x, y, z) - v).magnitude();
-                if (radius < r) {
-                  Display::cube[Display::cubeBuffer][x][y][z].maximize(
-                      c.scaled(255 * (1 - (radius / r))));
-                }
-              }
-            }
-      }
-
-      // Set voxel using system coordinates
-      inline void radiate4(const Vector3 &v0, const Color &c, const float r) {
-        Vector3 v = v0 + Vector3(CX, CY, CZ);
-        int16_t x1 = (int16_t)(v.x - r + 1);  // round up
-        int16_t x2 = (int16_t)(v.x + r);      // round down
-        int16_t y1 = (int16_t)(v.y - r + 1);  // round up
-        int16_t y2 = (int16_t)(v.y + r);      // round down
-        int16_t z1 = (int16_t)(v.z - r + 1);  // round up
-        int16_t z2 = (int16_t)(v.z + r);      // round down
-
-        for (int16_t x = x1; x <= x2; x++)
-          for (int16_t y = y1; y <= y2; y++)
-            for (int16_t z = z1; z <= z2; z++) {
-              if (((x | y | z) & 0xFFF0) == 0) {
-                float radius = (Vector3(x, y, z) - v).magnitude();
-                if (radius < r) {
-                  Display::cube[Display::cubeBuffer][x][y][z].maximize(c.scaled(
-                      255 / (1 + (radius * radius * radius * radius))));
-                }
-              }
-            }
-      }
-
-      // Set voxel using system coordinates
-      inline void radiate5(const Vector3 &v0, const Color &c, const float r) {
-        Vector3 v = v0 + Vector3(CX, CY, CZ);
-        int16_t x1 = (int16_t)(v.x - r + 1);  // round up
-        int16_t x2 = (int16_t)(v.x + r);      // round down
-        int16_t y1 = (int16_t)(v.y - r + 1);  // round up
-        int16_t y2 = (int16_t)(v.y + r);      // round down
-        int16_t z1 = (int16_t)(v.z - r + 1);  // round up
-        int16_t z2 = (int16_t)(v.z + r);      // round down
-
-        for (int16_t x = x1; x <= x2; x++)
-          for (int16_t y = y1; y <= y2; y++)
-            for (int16_t z = z1; z <= z2; z++) {
-              if (((x | y | z) & 0xFFF0) == 0) {
-                float radius = (Vector3(x, y, z) - v).magnitude();
-                if (radius < r) {
-                  Display::cube[Display::cubeBuffer][x][y][z].maximize(c.scaled(
-                      255 /
-                      (1 + (radius * radius * radius * radius * radius))));
-                }
-              }
-            }
-      }
-
-      // Draw a line through the center of the cube with direction n
-      inline void line(Vector3 n) {
-        // Get the normal vector n hat.
-        n.normalize();
-        // Multiply by the diagonal corner to corner distance
-        n *= sqrt(CX * CX + CY * CY + CZ * CZ) + 0.001f;
-        // Get the amount of steps needed
-        float steps = max(abs(n.z), max(abs(n.x), abs(n.y)));
-        // Get the increment vector for each dimension
-        Vector3 inc = n / steps;
-        // The vector is pointing in the direction of Red -> Yellow
-        for (uint8_t i = 0; i <= steps; i++) {
-          voxel(inc * +i, Color(+i * 8, RainbowGradientPalette));
-          voxel(inc * -i, Color(-i * 8, RainbowGradientPalette));
+  for (int16_t x = x1; x <= x2; x++)
+    for (int16_t y = y1; y <= y2; y++)
+      for (int16_t z = z1; z <= z2; z++) {
+        if (((x | y | z) & 0xFFF0) == 0) {
+          float radius = (Vector3(x, y, z) - v).magnitude();
+          if (radius < r) {
+            Display::cube[Display::cubeBuffer][x][y][z].maximize(
+                c.scaled(255 * (1 - (radius / r))));
+          }
         }
       }
+}
 
-      inline void setMotionBlur(uint8_t n) { Display::setMotionBlur(n); }
+// Set voxel using system coordinates
+inline void radiate4(const Vector3 &v0, const Color &c, const float r) {
+  Vector3 v = v0 + Vector3(CX, CY, CZ);
+  int16_t x1 = (int16_t)(v.x - r + 1);  // round up
+  int16_t x2 = (int16_t)(v.x + r);      // round down
+  int16_t y1 = (int16_t)(v.y - r + 1);  // round up
+  int16_t y2 = (int16_t)(v.y + r);      // round down
+  int16_t z1 = (int16_t)(v.z - r + 1);  // round up
+  int16_t z2 = (int16_t)(v.z + r);      // round down
+
+  for (int16_t x = x1; x <= x2; x++)
+    for (int16_t y = y1; y <= y2; y++)
+      for (int16_t z = z1; z <= z2; z++) {
+        if (((x | y | z) & 0xFFF0) == 0) {
+          float radius = (Vector3(x, y, z) - v).magnitude();
+          if (radius < r) {
+            Display::cube[Display::cubeBuffer][x][y][z].maximize(
+                c.scaled(255 / (1 + (radius * radius * radius * radius))));
+          }
+        }
+      }
+}
+
+// Set voxel using system coordinates
+inline void radiate5(const Vector3 &v0, const Color &c, const float r) {
+  Vector3 v = v0 + Vector3(CX, CY, CZ);
+  int16_t x1 = (int16_t)(v.x - r + 1);  // round up
+  int16_t x2 = (int16_t)(v.x + r);      // round down
+  int16_t y1 = (int16_t)(v.y - r + 1);  // round up
+  int16_t y2 = (int16_t)(v.y + r);      // round down
+  int16_t z1 = (int16_t)(v.z - r + 1);  // round up
+  int16_t z2 = (int16_t)(v.z + r);      // round down
+
+  for (int16_t x = x1; x <= x2; x++)
+    for (int16_t y = y1; y <= y2; y++)
+      for (int16_t z = z1; z <= z2; z++) {
+        if (((x | y | z) & 0xFFF0) == 0) {
+          float radius = (Vector3(x, y, z) - v).magnitude();
+          if (radius < r) {
+            Display::cube[Display::cubeBuffer][x][y][z].maximize(c.scaled(
+                255 / (1 + (radius * radius * radius * radius * radius))));
+          }
+        }
+      }
+}
+
+// Draw a line through the center of the cube with direction n
+inline void line(Vector3 n) {
+  // Get the normal vector n hat.
+  n.normalize();
+  // Multiply by the diagonal corner to corner distance
+  n *= sqrt(CX * CX + CY * CY + CZ * CZ) + 0.001f;
+  // Get the amount of steps needed
+  float steps = max(abs(n.z), max(abs(n.x), abs(n.y)));
+  // Get the increment vector for each dimension
+  Vector3 inc = n / steps;
+  // The vector is pointing in the direction of Red -> Yellow
+  for (uint8_t i = 0; i <= steps; i++) {
+    voxel(inc * +i, Color(+i * 8, RainbowGradientPalette));
+    voxel(inc * -i, Color(-i * 8, RainbowGradientPalette));
+  }
+}
+
+inline void setMotionBlur(uint8_t n) { Display::setMotionBlur(n); }
 #endif

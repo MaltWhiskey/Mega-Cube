@@ -91,7 +91,7 @@ class Mario : public Animation {
         }
         // Map to coordinates with center (0,0,0) scaled by radius
         // Project on a line at the left of the coordinate system
-        Vector3 point = Vector3(-radius, 7.5f - y, 0) / 7.5f * radius;
+        Vector3 point = Vector3(-radius, (7.5f - y) / 7.5f * radius, 0);
         Quaternion q = Quaternion(angle - (arc * x), Vector3::Y);
         radiate(q.rotate(point), c, 1.0f);
       }
