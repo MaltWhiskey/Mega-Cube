@@ -20,7 +20,7 @@ class Scroller : public Animation {
     timer_starting = settings.starttime;
     timer_running = settings.runtime;
     timer_ending = settings.endtime;
-    text_rotation = -95.0f;
+    text_rotation = -100.0f;
     text_rotation_speed = settings.rotation_speed;
     radius = settings.radius;
   }
@@ -55,16 +55,14 @@ class Scroller : public Animation {
 
     // Amount of degrees the text has been rotated
     text_rotation += text_rotation_speed * dt;
-    // Full circle resolution (radius 15) in amount of pixels
-    // ø = (sin)^-1*(1/15) -> 360 / 2 * ø ≈ 47 for radius 7.5
-    // for radius 15 -> 47 * 2 ≈ 94. (changes height of charset)
-    float circle_resolution = 94.16f;
+    // Full circle resolution in amount of pixels
+    float circle_resolution = 2 * PI * radius;
     // Angle adjustment in degrees for each line
     float line_angle_adj = 360 / circle_resolution;
     // Amount of pixels the text has been rotated
     float pixel_start = text_rotation / line_angle_adj;
     // Start of the line_angle at a bit over 90 degrees
-    float line_angle = 90.01f;
+    float line_angle = 100.0f;
     // Fine adjustment for angles between lines.
     // Ignore because this will add a lot of jittering.
     // line_angle += fmod(text_rotation, line_angle_adj);
@@ -90,7 +88,8 @@ class Scroller : public Animation {
           uint32_t data = charset_data[t][y * CHARSET_FRAME_WIDTH + x];
           if (data & 0xff000000) {
             Color c = Color(data & 0xff, data >> 8 & 0xff, data >> 16 & 0xff);
-            Vector3 pixel = q.rotate(Vector3(x / 15.0f, 0, -1) * radius);
+            Vector3 pixel = q.rotate(
+                Vector3(x / (CHARSET_FRAME_WIDTH - 1.0f), 0, -1) * radius);
             pixel += Vector3(-radius / 2, -radius / 2, radius / 2);
             voxel(pixel, c.scale(brightness).gamma());
           }
