@@ -76,7 +76,6 @@ void Display::update() {
           uint8_t chn = (x >> 1 & 0x0E) + (z << 1 & 0xF8) + (z >> 1 & 1);
           uint32_t value = cube[cubeBuffer][x][y][z]
                                .blend(motionBlur, cube[1 - cubeBuffer][x][y][z])
-                               .scale(brightness)
                                .bits();
           value = (value << (1 + chn)) | (value >> (31 - chn));
           uint32_t mask = 1 << chn;

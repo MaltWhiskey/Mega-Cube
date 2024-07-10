@@ -373,9 +373,10 @@ namespace ILI9341_T4
 
 
 
-    private:
+    public:
 
         static const int        MIN_BUFFER_SIZE = 16;             // minimum buffer size
+    private:
         static const int        PADDING = 8;                      // reserved at end of buffer (in case of overflow)
         static const uint32_t   TAG_END = (0x400000 - 1);         // tag at end of diff
         static const uint32_t   TAG_WRITE_ALL = (0x400000 - 2);   // tag to write everything remaining

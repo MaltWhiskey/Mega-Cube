@@ -8,3 +8,13 @@ core/LCD.*
 space/
     pong scores + fading in after destruction
     clock
+
+
+    ---------------------------------------
+    HARDWARE:
+
+    SOFTWARE:
+        copy config from infinity, but skip json stuff.
+        Carefull brightness is uint8_t instead of float -> all anim effected.
+        
+        

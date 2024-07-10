@@ -75,4 +75,9 @@ class Animation {
   // Get animation jump_items_t (returns 0 when above index)
   static jump_item_t get_item(uint16_t index);
 };
+
+inline void setMotionBlur(uint8_t n) { Display::setMotionBlur(n); }
+inline uint8_t getMotionBlur() { return Display::getMotionBlur(); }
+inline void setBrightness(float n) { Display::setBrightness(n); }
+inline float getBrightness() { return Display::getBrightness(); }
 #endif

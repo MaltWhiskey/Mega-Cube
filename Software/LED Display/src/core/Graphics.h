@@ -134,22 +134,50 @@ inline void radiate5(const Vector3 &v0, const Color &c, const float r) {
       }
 }
 
+//  Draw a line through two points using system coordinates
+inline void line(Vector3 a, Vector3 b) {
+  // Get the difference vector.
+  Vector3 n = (a - b);
+  // Get the amount of steps needed
+  float steps = 1 + max(abs(n.z), max(abs(n.x), abs(n.y)));
+  // Get the increment vector for each dimension
+  Vector3 inc = n / steps;
+  // The vector is pointing in the direction of Red -> Yellow
+  for (uint8_t i = 0; i <= steps; i++)
+    voxel(a - (inc * i), Color(i * 8, RainbowGradientPalette));
+}
+
+//  Draw a line through two points using system coordinates
+inline void line(Vector3 a, Vector3 b, Color c) {
+  // Get the difference vector.
+  Vector3 n = (a - b);
+  // Get the amount of steps needed
+  float steps = 1 + max(abs(n.z), max(abs(n.x), abs(n.y)));
+  // Get the increment vector for each dimension
+  Vector3 inc = n / steps;
+  // The vector is pointing in the direction of Red -> Yellow
+  for (uint8_t i = 0; i <= steps; i++) voxel(a - (inc * i), c);
+}
+
+//  Draw a line through two points using system coordinates
+inline void line(Vector3 a, Vector3 b, Color c, const float r) {
+  // Get the difference vector.
+  Vector3 n = (a - b);
+  // Get the amount of steps needed
+  float steps = 1 + max(abs(n.z), max(abs(n.x), abs(n.y)));
+  // Get the increment vector for each dimension
+  Vector3 inc = n / steps;
+  // The vector is pointing in the direction of Red -> Yellow
+  for (uint8_t i = 0; i <= steps; i++) radiate4(a - (inc * i), c, r);
+}
+
 // Draw a line through the center of the cube with direction n
 inline void line(Vector3 n) {
   // Get the normal vector n hat.
   n.normalize();
-  // Multiply by the diagonal corner to corner distance
-  n *= sqrt(CX * CX + CY * CY + CZ * CZ) + 0.001f;
-  // Get the amount of steps needed
-  float steps = max(abs(n.z), max(abs(n.x), abs(n.y)));
-  // Get the increment vector for each dimension
-  Vector3 inc = n / steps;
-  // The vector is pointing in the direction of Red -> Yellow
-  for (uint8_t i = 0; i <= steps; i++) {
-    voxel(inc * +i, Color(+i * 8, RainbowGradientPalette));
-    voxel(inc * -i, Color(-i * 8, RainbowGradientPalette));
-  }
+  // Determine center to corner distance
+  const float scalar = sqrt(CX * CX + CY * CY + CZ * CZ);
+  // Draw a line through the center
+  line(n * scalar, n * -scalar);
 }
-
-inline void setMotionBlur(uint8_t n) { Display::setMotionBlur(n); }
 #endif
