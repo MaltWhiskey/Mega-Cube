@@ -70,7 +70,7 @@ class Spectrum : public Animation {
         brightness *= (1 - timer_ending.ratio());
       }
     }
-
+/*
     auto &hid = config.hid.button;
     if (btn_A != hid.a) {
       btn_A = hid.a;
@@ -95,6 +95,7 @@ class Spectrum : public Animation {
         }
       }
     }
+*/
 
     // Adjust bars and draw Spectrum
     for (uint8_t i = 0; i < 64; i++) {

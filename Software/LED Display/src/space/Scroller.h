@@ -10,9 +10,9 @@ class Scroller : public Animation {
   float radius;
   float text_rotation;
   float text_rotation_speed;
-  String text = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  String text;
 
-  static constexpr auto &settings = config.animation.scroller;
+  static constexpr auto &settings = config.animation.arc_scroller;
 
  public:
   void init() {
@@ -21,14 +21,14 @@ class Scroller : public Animation {
     timer_running = settings.runtime;
     timer_ending = settings.endtime;
     text_rotation = -100.0f;
-    text_rotation_speed = settings.rotation_speed;
-    radius = settings.radius;
   }
   void set_text(String s) { text = s; }
 
-  void draw(float dt) {
+void draw(float dt) {
+    text_rotation_speed = settings.rotation_speed;
+    radius = settings.radius;
     setMotionBlur(settings.motionBlur);
-    uint8_t brightness = settings.brightness;
+    uint8_t brightness = settings.brightness * getBrightness();
 
     if (state == state_t::STARTING) {
       if (timer_starting.update()) {
@@ -100,7 +100,7 @@ class Scroller : public Animation {
   }
 
   uint16_t match_char(uint16_t chr) {
-    if (chr >= ' ' && chr <= 'Z')
+    if (chr >= ' ' && chr <= '~')
       return chr - ' ';
     else
       return '#' - ' ';

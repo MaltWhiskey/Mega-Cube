@@ -2,13 +2,13 @@
 #define PLASMA_H
 
 #include "Animation.h"
-#include "Power/Math8.h"
-#include "Power/Noise.h"
+#include "power/Math8.h"
+#include "power/Noise.h"
 /*---------------------------------------------------------------------------------------
  * Noise
  *-------------------------------------------------------------------------------------*/
 class Plasma : public Animation {
- private:
+private:
   // speed_offset is used to travel a 1d noise map and get the axis speeds
   float speed_offset;
   float speed_offset_speed;
@@ -30,24 +30,24 @@ class Plasma : public Animation {
 
   static constexpr auto &settings = config.animation.plasma;
 
- public:
+public:
   void init() {
     state = state_t::STARTING;
     timer_starting = settings.starttime;
     timer_running = settings.runtime;
     timer_ending = settings.endtime;
+    speed_offset = 0;
+  }
+
+  void draw(float dt) {
     scale_p = settings.scale_p;
     speed_x = settings.speed_x;
     speed_y = settings.speed_y;
     speed_z = settings.speed_z;
     speed_w = settings.speed_w;
-    speed_offset = 0;
     speed_offset_speed = settings.speed_offset_speed;
-  }
-
-  void draw(float dt) {
     setMotionBlur(settings.motionBlur);
-    uint8_t brightness = settings.brightness;
+    uint8_t brightness = settings.brightness * getBrightness();
 
     if (state == state_t::STARTING) {
       if (timer_starting.update()) {
@@ -85,7 +85,7 @@ class Plasma : public Animation {
         for (int z = 0; z < Display::depth; z++) {
           float zoffset = noise_z + scale_p * z;
           noise_map[x][y][z] =
-              noise.noise4(xoffset, yoffset, zoffset, noise_w) * 255;
+            noise.noise4(xoffset, yoffset, zoffset, noise_w) * 255;
         }
       }
     }
@@ -100,9 +100,9 @@ class Plasma : public Animation {
           uint8_t index = noise_map[x][y][z];
           // The value at (y,x,z) is the overlay for the brightness
           voxel(x, y, z,
-                Color((hue16 >> 8) + index, LavaPalette)
-                    .scale(noise_map[y][x][z])
-                    .scale(brightness));
+            Color((hue16 >> 8) + index, LavaPalette)
+            .scale(noise_map[y][x][z])
+            .scale(brightness));
         }
       }
     }

@@ -2,7 +2,7 @@
 #define LIFE_H
 
 #include "Animation.h"
-#include "Power/Math8.h"
+#include "power/Math8.h"
 
 class Life : public Animation {
  private:
@@ -202,14 +202,13 @@ class Life : public Animation {
   void init() {
     state = state_t::RUNNING;
     timer_running = settings.runtime;
-    time_interval = settings.interval;
-    time_phase = time_interval * 2;
     game_reset();
   }
 
-  void draw(float dt) {
-    setMotionBlur(config.animation.life.motionBlur);
-    uint8_t brightness = settings.brightness;
+ void draw(float dt) {
+    time_interval = settings.interval;
+    setMotionBlur(settings.motionBlur);
+    uint8_t brightness = settings.brightness * getBrightness();
 
     if (timer_running.update()) {
       state = state_t::ENDING;
@@ -240,8 +239,8 @@ class Life : public Animation {
     Color alive = Color(255, 150, 30);
     Color sparkle = Color(255, 30, 150);
     Color dead = Color::BLACK;
-    Color dieing = Color::RED;
-    Color birth = Color::BLUE;
+    Color dieing = Color(150, 00, 00);
+    Color birth = Color(150, 255, 00);
 
     Color colors[6] = {
         Color(scale, alive, sparkle), Color(scale, sparkle, alive),

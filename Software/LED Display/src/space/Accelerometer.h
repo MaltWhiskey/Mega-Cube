@@ -2,7 +2,7 @@
 #define ACCELEROMETER_H
 
 #include "Animation.h"
-#include "Power/Math8.h"
+#include "power/Math8.h"
 
 class Accelerometer : public Animation {
  private:
@@ -14,11 +14,12 @@ class Accelerometer : public Animation {
   void init() {
     state = state_t::RUNNING;
     timer_running = settings.runtime;
-    radius = settings.radius;
   }
 
   void draw(float dt) {
+    radius = settings.radius;
     setMotionBlur(settings.motionBlur);
+    uint8_t brightness = settings.brightness * getBrightness();
     if (timer_running.update()) {
       state = state_t::INACTIVE;
     }
@@ -26,14 +27,15 @@ class Accelerometer : public Animation {
       state = state_t::INACTIVE;
     }
 
-    auto &hid = config.hid.accelerometer;
+    auto &hid = config.devices.accelerometer;
     Vector3 v = Vector3(hid.x, hid.z, hid.y);
     if (v.magnitude() > 0)
       v.normalize();
-    else {
-      line(Vector3(1, 1, 1));
-      line(Vector3(-1, 1, -1));
-      return;
+    else {  // Demo  mode
+      static float phase = 0;
+      phase += dt * 4.0f;
+      v = Vector3(sinf(phase), sinf(phase * 0.9f), sinf(phase * 1.1f))
+              .normalize();
     }
     Quaternion ortho = Quaternion(90, Vector3::Y) * Quaternion(180, Vector3::X);
     line(ortho.rotate(v));
@@ -43,7 +45,7 @@ class Accelerometer : public Animation {
     Vector3 pointer = front.rotate(v);
 
     if (pointer.z < 0) {
-      pointer *= 1 / pointer.z;
+      pointer *= -1 / pointer.z;
       if (pointer.x > 1)
         pointer.x = 1;
       else if (pointer.x < -1)

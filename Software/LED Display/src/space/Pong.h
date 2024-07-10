@@ -17,7 +17,7 @@ class Pad {
 
   bool move(const float dt, uint8_t scale) {
     if (!exploded) {  // Exploded pads don't move
-      auto& hid = config.hid.accelerometer;
+      auto& hid = config.devices.accelerometer;
       Vector3 v = Vector3(hid.x, hid.z, hid.y);
       if (v.magnitude() > 0)
         v.normalize();

@@ -4,7 +4,7 @@
 #include "Animation.h"
 
 class Helix : public Animation {
- private:
+private:
   float radius;
   float resolution;
 
@@ -22,18 +22,11 @@ class Helix : public Animation {
 
   static constexpr auto &settings = config.animation.helix;
 
- public:
+public:
   void init() {
     state = state_t::RUNNING;
     timer_running = settings.runtime;
     timer_interval = settings.interval;
-    phase_speed = settings.phase_speed;
-    angle = settings.angle;
-    angle_speed = settings.angle_speed;
-    hue16_speed = settings.hue_speed * 255;
-    radius = settings.radius;
-    resolution = settings.resolution;
-
     phase = 0;
     bottom = 0;
     top = 0;
@@ -42,8 +35,14 @@ class Helix : public Animation {
   }
 
   void draw(float dt) {
+    phase_speed = settings.phase_speed;
+    angle = settings.angle;
+    angle_speed = settings.angle_speed;
+    hue16_speed = settings.hue_speed * 255;
+    radius = settings.radius;
+    resolution = settings.resolution;
     setMotionBlur(settings.motionBlur);
-    uint8_t brightness = settings.brightness;
+    uint8_t brightness = settings.brightness * getBrightness();
 
     phase += dt * phase_speed;
     angle += dt * angle_speed;

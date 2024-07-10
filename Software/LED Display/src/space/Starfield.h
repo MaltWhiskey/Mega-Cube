@@ -21,9 +21,6 @@ class Starfield : public Animation {
     timer_starting = settings.starttime;
     timer_running = settings.runtime;
     timer_ending = settings.endtime;
-    phase_speed = settings.phase_speed;
-    hue16_speed = settings.hue_speed * 255;
-    body_diagonal = settings.body_diagonal;
     phase = 0;
 
     if (!initialized) {
@@ -33,11 +30,14 @@ class Starfield : public Animation {
       }
       initialized = true;
     }
-    setMotionBlur(settings.motionBlur);
   }
 
   void draw(float dt) {
-    uint8_t brightness = settings.brightness;
+    phase_speed = settings.phase_speed;
+    hue16_speed = settings.hue_speed * 255;
+    body_diagonal = settings.body_diagonal;
+    setMotionBlur(settings.motionBlur);
+    uint8_t brightness = settings.brightness * getBrightness();
     phase += dt * phase_speed;
     hue16 += dt * hue16_speed;
 
@@ -64,7 +64,7 @@ class Starfield : public Animation {
       }
     }
 
-    Quaternion q = Quaternion(000.0f * phase, Vector3(0, 1, 0));
+    Quaternion q = Quaternion(25.0f * phase, Vector3(0, 1, 0));
     for (int i = 0; i < numStars; i++) {
       float r = (stars[i] * 3 - Vector3(0, 0, -2.0f)).magnitude();
       stars[i].z += sinf(phase) * 1.75f * dt * r;

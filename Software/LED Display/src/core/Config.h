@@ -1,9 +1,17 @@
 #ifndef MAIN_H
 #define MAIN_H
 #include <Arduino.h>
+#include <ArduinoJson.h>
+#include <LittleFS.h>
 #include <stdint.h>
+#include <string>
+
+// Json document size to hold the commands send between client/server
+#define COMMAND_DOC_SIZE 255
+// Json document size to hold the config (depends on config size)
+#define CONFIG_DOC_SIZE 20000
 /*-----------------------------------------------------------------------------
- * Evil global parameters
+ * Global parameters
  *
  * These parameters are used for dynamically changing runtime operation. They
  * can (optionally) be loaded from and writen to persistant storage.
@@ -11,26 +19,38 @@
  * Animation init or draw routines need to apply these parameters to
  * dynamically set runtime parameters. Init only gets called when an animation
  * starts or restarts draw gets called every animation frame so choose wisely
- * where to apply. And let these parameters take effect.
+ * where to apply. And let these parameters take effect. (Be careful of Timers)
+ *
+ * After creation of the config object, call load() to load the configuration
+ * from the "config.json" file and apply the values to the config struct.
+ *
+ * If no "config.json" exists the config structs keeps the values supplied in
+ * the code. After saveing a "config.json" is freshly created.
  *---------------------------------------------------------------------------*/
 struct Config {
+    struct {
+    uint16_t max_milliamps = 18000;
+    float brightness = 1;
+    int16_t motor_speed = -150;
+  } power;
+
   struct {
-    struct {
-      char ssid[32] = "-^..^-";
-      char password[64] = "qazwsxedc";
-    } wifi;
-    struct {
-      char hostname[64] = "MegaCube";
-      uint16_t port = 8080;
-    } server;
+    char ssid[32] = "-^..^-";
+    char password[64] = "qazwsxedc";
+    char hostname[64] = "MegaCube";
+    uint16_t port = 80;
   } network;
+
   struct {
+    // Do not serialize changed to disk/gui
     boolean changed = false;
     boolean play_one = false;
+    // Only serialize animation to disk
     uint8_t animation = 0;
     struct {
       float runtime = 30.0f;
       float radius = 7.5f;
+      uint8_t brightness = 255;
       uint8_t motionBlur = 220;
     } accelerometer;
     struct {
@@ -54,9 +74,21 @@ struct Config {
       float radius_start = 1.0f;
       float distance = 4.0f;
       int8_t hue_speed = 25;
-      uint8_t brightness = 200;
+      uint8_t brightness = 255;
       uint8_t motionBlur = 200;
     } atoms;
+    struct {
+      float starttime = 5.0f;
+      float runtime = 30.0f;
+      float endtime = 5.0f;
+      float angle_speed = 160.0f;
+      float radius = 7.0f;
+      float radius_start = 1.0f;
+      float distance = 1.0f;
+      int8_t hue_speed = -50;
+      uint8_t brightness = 255;
+      uint8_t motionBlur = 0;
+    } cube;
     struct {
       float runtime = 30.0f;
       float radius = 7.5f;
@@ -79,7 +111,7 @@ struct Config {
     struct {
       float runtime = 30.0f;
       float interval = 0.20f;
-      uint8_t brightness = 200;
+      uint8_t brightness = 255;
       uint8_t motionBlur = 0;
     } life;
     struct {
@@ -104,8 +136,8 @@ struct Config {
       float speed_w = 0.4f;
       float speed_offset_speed = 0.02f;
       int8_t hue_speed = 30;
-      uint8_t motionBlur = 0;
       uint8_t brightness = 70;
+      uint8_t motionBlur = 0;
     } plasma;
     struct {
       float starttime = 2.0f;
@@ -123,7 +155,16 @@ struct Config {
       float radius = 15.0f;
       uint8_t brightness = 200;
       uint8_t motionBlur = 220;
-    } scroller;
+    } arc_scroller;
+    struct {
+      float starttime = 0.5f;
+      float runtime = 30.0f;
+      float endtime = 2.0f;
+      float interval = 0.1f;
+      int8_t hue_speed = -50;
+      uint8_t brightness = 255;
+      uint8_t motionBlur = 220;
+    } box_scroller;
     struct {
       float starttime = 5.0f;
       float runtime = 30.0f;
@@ -148,10 +189,10 @@ struct Config {
       float runtime = 30.0f;
       float endtime = 5.0f;
       float phase_speed = 0.3f;
+      float body_diagonal = 13.0f;
       int8_t hue_speed = 30;
       uint8_t brightness = 200;
       uint8_t motionBlur = 230;
-      float body_diagonal = 13.0f;
     } starfield;
     struct {
       float runtime = 30.0f;
@@ -162,25 +203,23 @@ struct Config {
       uint8_t motionBlur = 0;
     } twinkels;
   } animation;
+
+  // Do not serialize devices
   struct {
-    struct {
-      int8_t x = 0;
-      int8_t y = 0;
-      boolean z = false;
-      boolean a = false;
-      boolean b = false;
-      boolean c = false;
-    } button;
     struct {
       float x = 0;
       float y = 0;
       float z = 0;
     } accelerometer;
     struct {
-      uint8_t data[64];
-      boolean updated = false;
+      float x = 0;
+      float y = 0;
+    } joystick;
+    struct {
+      volatile float level[64];
     } fft;
-  } hid;
+  } devices;
+ 
 };
 // All cpp files that include this link to a single config struct
 extern struct Config config;

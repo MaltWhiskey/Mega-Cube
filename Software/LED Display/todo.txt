@@ -15,6 +15,10 @@ space/
 
     SOFTWARE:
         copy config from infinity, but skip json stuff.
-        Carefull brightness is uint8_t instead of float -> all anim effected.
+        Pong.h needs checking
+        Spectrum.h needs checking
+        Cube.h is new
+
+        
         
         

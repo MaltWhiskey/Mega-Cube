@@ -30,8 +30,6 @@ class Twinkels : public Animation {
     state = state_t::RUNNING;
     timer_running = settings.runtime;
     timer_interval = settings.interval;
-    fade_in_speed = settings.fade_in_speed;
-    fade_out_speed = settings.fade_out_speed;
   }
   void set_mode(bool single, bool fade_out) {
     mode_single_color = single;
@@ -54,10 +52,12 @@ class Twinkels : public Animation {
   }
 
   void draw(float dt) {
+    fade_in_speed = settings.fade_in_speed;
+    fade_out_speed = settings.fade_out_speed;
     setMotionBlur(settings.motionBlur);
-    uint8_t brightness = settings.brightness;
+    uint8_t brightness = settings.brightness * getBrightness();
     uint16_t pixels_active = 0;
-
+    
     for (uint8_t x = 0; x < Display::width; x++) {
       for (uint8_t y = 0; y < Display::height; y++) {
         for (uint8_t z = 0; z < Display::depth; z++) {

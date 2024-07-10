@@ -79,5 +79,5 @@ class Animation {
 inline void setMotionBlur(uint8_t n) { Display::setMotionBlur(n); }
 inline uint8_t getMotionBlur() { return Display::getMotionBlur(); }
 inline void setBrightness(float n) { Display::setBrightness(n); }
-inline float getBrightness() { return Display::getBrightness(); }
+inline float getBrightness() { return Display::getBrightness()/255.0f; }
 #endif

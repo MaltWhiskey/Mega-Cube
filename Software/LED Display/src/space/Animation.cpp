@@ -14,6 +14,7 @@
 #include "Spectrum.h"
 #include "Starfield.h"
 #include "Twinkels.h"
+#include "Cube.h"
 /*------------------------------------------------------------------------------
  * ANIMATION STATIC DEFINITIONS
  *----------------------------------------------------------------------------*/
@@ -38,11 +39,12 @@ Sinus sinus;
 Spectrum spectrum;
 Starfield starfield;
 Twinkels twinkels;
+Cube cube;
 
 Animation *Animations[] = {&atoms,      &sinus,    &starfield,    &fireworks1,
                            &fireworks2, &twinkels, &helix,        &arrows,
                            &plasma,     &mario,    &life,         &pong,
-                           &spectrum,   &scroller, &accelerometer};
+                           &spectrum,   &scroller, &accelerometer, &cube};
 
 const uint8_t ANIMATIONS = sizeof(Animations) / sizeof(Animation *);
 /*----------------------------------------------------------------------------*/
@@ -85,9 +87,11 @@ void Animation::loop() {
 void Animation::end() {
   if (state == state_t::STARTING) {
     timer_ending = Timer(2.0f, timer_starting.ratio(), true);
-  } else if (state == state_t::RUNNING) {
+  }
+  else if (state == state_t::RUNNING) {
     timer_ending = 2.0f;
-  } else if (state == state_t::ENDING && !time_reduction) {
+  }
+  else if (state == state_t::ENDING && !time_reduction) {
     timer_ending = Timer(2.0f, timer_ending.ratio(), false);
   }
   state = state_t::ENDING;
@@ -119,6 +123,7 @@ jump_item_t Animation::get_item(uint16_t index) {
       {"Accelerometer", "Test accelerometer", 0, &accelerometer},
       {"Arrows", "Moving arrows", 0, &arrows},
       {"Atoms", "Electons arround nucleas", 0, &atoms},
+      {"Cube", "Cube in a cube", 0, &cube},
       {"Fireworks", "Fireing Fireworks", &FIREWORKS, &fireworks1},
       {"Helix", "Double strand DNA", 0, &helix},
       {"Life", "Game of Life 3D", 0, &life},
@@ -149,7 +154,8 @@ void Animation::next(bool play_one, uint16_t index) {
       jump.object->timer_running = 0;
     }
     if (jump.custom_init) jump.custom_init();
-  } else {
+  }
+  else {
     // Play the next animation from the sequence
     jump_item_t jump = get_item(animation_sequence++);
     if (!jump.object) {

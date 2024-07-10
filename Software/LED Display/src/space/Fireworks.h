@@ -45,9 +45,10 @@ class Fireworks : public Animation {
     exploded = false;
   }
 
-  void draw(float dt) {
+    void draw(float dt) {
+    radius = settings.radius;
     setMotionBlur(settings.motionBlur);
-    uint8_t brightness = settings.brightness;
+    uint8_t brightness = settings.brightness * getBrightness();
 
     // Missile drawing mode
     if (!exploded) {
@@ -73,7 +74,8 @@ class Fireworks : public Animation {
           debris[i] = {temp, explode, uint8_t(hue + random(0, 64)), 1.0f,
                        noise.nextRandom(1.0f, 2.0f)};
         }
-      } else {
+      }
+      else {
         voxel(missile.position * radius, Color::WHITE);
       }
     }
